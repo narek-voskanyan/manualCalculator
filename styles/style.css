@@ -1,0 +1,344 @@
+*{
+     box-sizing: border-box;
+}
+
+body{
+    margin: 0;
+    display: block;
+}
+
+header{
+    display: block;
+    unicode-bidi: isolate;
+}
+button{
+    appearance: auto;
+    cursor: pointer;
+    border: 1px solid #dce3ee;
+    background: white;
+    color: inherit;
+    border-radius: 8px;
+    padding: 9px 13px;
+}
+
+
+article{
+    display: block;
+    unicode-bidi: isolate;
+}
+div{
+    display: block;
+    unicode-bidi: isolate;
+}
+label {
+    cursor: default;
+    display: block;
+    font-size: 11px;
+    color: #718096;
+}
+.header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 32px;
+}
+.header-title-container h1{
+    font-size: 30px;
+    letter-spacing: -.8px;
+    margin: 12px 0;
+}
+.header-title-container p{
+    color: #718096;
+    line-height: 1.6;
+    display: block;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+    unicode-bidi: isolate;
+}
+
+
+/* add calculator button stile*/
+.add-calculator-button{
+    background: #2878ef;
+    border-color: #2878ef;
+    color: white;
+}
+
+/* calculator-workspace is contain style for the calculator workspace main styles*/
+.calculator-workspace{
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+}
+
+/* control panel title container styles*/
+.control-panel-title{
+        display: block;
+        font-size: 1.5em;
+        margin-block-start: 0.83em;
+        margin-block-end: 0.83em;
+        margin-inline-start: 0px;
+        margin-inline-end: 0px;
+        font-weight: bold;
+        unicode-bidi: isolate;
+}
+.control-panel-buttons{
+    display: flex;
+    gap: 6px;
+    margin: 16px 0;
+}
+.collapse-all-button,
+.expand-all-button{
+    font-size: 11px;
+    flex: 1;
+    padding: 8px 4px;
+    font-family: Inter, -apple-system;
+    display: inline-flex; 
+  
+    /* 2. Center text horizontally */
+    justify-content: center; 
+    
+    /* 3. Center text vertically */
+    align-items: center; 
+}
+
+.collapse-all-button,
+.expand-all-button{
+    display: flex;
+    gap: 6px;
+    margin: 16px 0;
+    cursor: pointer;
+    border: 1px solid #dce3ee;
+    background: white;
+    color: inherit;
+    border-radius: 8px;
+    padding: 9px 13px;
+}
+
+.collapse-all-button:hover,
+.expand-all-button:hover{
+    background: #edf3ff;
+    border-color: #96b8fa;
+}
+
+/* control panel emty stily*/
+.control-panel-empty
+{
+    font-size: 12px;
+    color: #7c899c;
+    line-height: 1.6;
+}
+
+/*control pannel footer styles*/
+.control-panel-footer{
+    margin-top: 22px;
+    border-top: 1px solid #edf0f6;
+    padding-top: 16px;
+
+    font-size: 12px;
+    color: #7c899c;
+    line-height: 1.6;
+}
+.control-panel-footer b{
+    color: #435875;
+    font-weight: 600;
+}
+
+
+
+
+
+
+/* control panel description styles*/
+.control-panel-description{
+    font-size: 12px;
+    color: #7c899c;
+    line-height: 1.6;
+}
+.calculator-container{
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 48px 32px;
+}
+.control-panel{
+    box-sizing: border-box;
+    background: white;
+    border: 1px solid #e0e6f0;
+    border-radius: 14px;
+    padding: 20px;
+    position: sticky;
+    top: 20px;
+    display: block;
+    unicode-bidi: isolate;
+}
+/*Calculator styles*/
+.calculator-list{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+    gap: 18px;
+    align-items: start;
+    min-height: 140px;
+}
+.calculator{
+    position: relative;
+    background: white;
+    border: 1px solid #dce5f1;
+    border-radius: 13px;
+    box-shadow: 0 5px 18px #22324a05;
+    transition: border-color .15s;
+    min-width: 0;
+}
+.calculator-window-header{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 15px 12px;
+    border-bottom: 1px solid #edf0f6;
+}
+.calculator-window-header{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 15px 12px;
+    border-bottom: 1px solid #edf0f6;
+}
+.drag-calculator-button{
+    cursor: grab;
+    user-select: none;
+    border: 0;
+    background: transparent;
+    color: #8698af;
+    font-size: 18px;
+    line-height: 1;
+    padding: 5px;
+    touch-action: none;
+}
+.calculator-window-title{
+    font-size: 13px;
+    font-weight: 650;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.minimize-calculator-button,
+.remove-calculator-button{
+    padding: 3px 7px;
+    border: 0;
+    background: transparent;
+    color: #8393a8;
+}
+.minimize-calculator-button:hover{
+    background: #edf3ff;
+    border-color: #96b8fa;
+}
+.remove-calculator-button:hover{
+    color: #d34646;
+    background: #fff0f0;
+}
+.calculator-content{
+    padding: 18px;
+}
+.input-fields{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.input-field{
+    display: block;
+    width: 100%;
+    margin: 7px 0 18px;
+    padding: 10px;
+    border: 1px solid #dce5f1;
+    border-radius: 7px;
+    color: #243750;
+    background: white;
+}
+.input-field-label{
+    display: block;
+    font-size: 11px;
+    color: #718096;
+}
+.input-field:focus-visible{
+    outline: 3px solid #a5c5ff;
+    outline-offset: 2px;
+}
+.operation-label{
+    display: block;
+    font-size: 11px;
+    color: #718096;
+}
+.operator-buttons{
+    display: flex;
+    gap: 7px;
+    margin: 8px 0 15px;
+}
+.operator-option{
+        flex: 1;
+        font-size: 19px;
+        padding: 7px 0;
+        background: #f6f8fc;
+}
+.operator-option.active{
+        border-color: #2878ef;
+        color: #2878ef;
+        background: #edf4ff;
+}
+
+.clear-operator-label{
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 10px;
+        margin: 0 0 16px;
+}
+.clear-operator-checkbox{
+    margin: 0;
+}
+.calculate-button{
+    width: 100%;
+    font-weight: 600;
+    background: #2878ef;
+    border-color: #2878ef;
+    color: white;
+
+}
+.result-container{
+    background: #edf5ff;
+    border-radius: 9px;
+    padding: 14px;
+    margin: 15px 0;
+}
+.result-container small{
+    font-size: 10px;
+    color: #7388a2;
+}
+
+.error-message{
+    font-size: 13px;
+    color: #bc4141;
+}
+.result-container output{
+    display: block;
+    margin-top: 5px;
+    font-size: 25px;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+
+.clear-button{
+    width: 100%;
+    font-size: 11px;
+}
+
+
+
+@media (min-width: 1350px) {
+    .calculator-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

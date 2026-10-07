@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Manual Calculator</title>
+
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+
+<body>
+
+    <main class="calculator-container">
+
+        <!-- Page header -->
+        <header class="header">
+
+            <div class="header-title-container">
+
+                <div class="header-text">
+
+                    <h1 class="title">
+                        Calculator
+                    </h1>
+
+                    <p class="description">
+                        Simple calculations
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <!-- Global Add Calculator button -->
+            <button
+                class="add-calculator-button"
+                type="button"
+            >
+                + Add Calculator
+            </button>
+
+        </header>
+
+
+<!-- Calculator workspace -->
+<div class="calculator-workspace">
+    
+    <!-- Control panel -->
+    <aside class="control-panel">
+
+        <h2 class="control-panel-title">
+            Control Panel
+        </h2>
+
+        <p class="control-panel-description">
+            Rename, minimize, remove or reorder calculators.
+        </p>
+
+        <div class="control-panel-buttons">
+
+            <button class="collapse-all-button">Collapse all</button>
+
+            <button class="expand-all-button">Expand all</button>
+
+        </div>
+
+        <!-- Calculator controls will be created here -->
+        <div class="calculator-control-list">
+
+            <p class="control-panel-empty">
+                The list is empty.
+            </p>
+
+        </div>
+
+        <div class="control-panel-footer">
+
+            <b>One order everywhere</b>
+
+            <br>
+                Drag a row here; the calculator card
+                moves together with it.
+        </br>
+
+        </div>
+
+    </aside>
+
+
+    <!-- List of calculators -->
+    <div class="calculator-list">
+
+
+            <!-- Calculator -->
+            <article class="calculator">
+
+
+                <!-- Calculator window header -->
+                <div class="calculator-window-header">
+                    <button
+                        class="drag-calculator-button"
+                        type="button"
+                        aria-label="Drag calculator">
+                        ⠿
+                    </button>
+
+                    <span class="calculator-window-title">
+                        Calculator 1
+                    </span>
+
+
+                        <!-- Minimize button -->
+                        <button
+                            class="minimize-calculator-button"
+                            type="button"
+                            aria-label="Minimize calculator"
+                        >
+                            −
+                        </button>
+
+
+                        <!-- Remove button -->
+                        <button
+                            class="remove-calculator-button"
+                            type="button"
+                            aria-label="Remove calculator"
+                        >
+                            ×
+                        </button>
+
+                    
+
+                </div>
+
+
+                <!-- Minimized calculator result -->
+                <div class="calculator-minimized-content">
+
+                    <span class="calculator-minimized-result">
+                    </span>
+
+                </div>
+
+
+                <!-- Normal calculator content -->
+                <div class="calculator-content">
+
+
+                    <!-- Input fields -->
+                    <div class="input-fields">
+
+                        <div class="input-field-container">
+
+                            <label class="input-field-label">
+                                First number
+                            </label>
+
+                            <input
+                                class="input-field first-number"
+                                type="text" inputmode="decimal"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+
+                        <div class="input-field-container">
+
+                            <label class="input-field-label">
+                                Second number
+                            </label>
+
+                            <input
+                                class="input-field second-number"
+                                type="text" inputmode="decimal"
+                                autocomplete="off"
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Math operators -->
+                    <div class="operator-container">
+
+                        <p class="operation-label">
+                            Operation
+                        </p>
+
+
+                        <div class="operator-buttons">
+                            <!-- Addition -->
+                            <button data-action="operation" data-value="+" class="operator-option"
+                            aria-pressed="false">
+                                +
+                            </button>
+                            <!-- Subtraction -->
+                            <button data-action="operation" data-value="-" class="operator-option"
+                            aria-pressed="false">
+                                -
+                            </button>
+                            <!-- Multiplication -->
+                            <button data-action="operation" data-value="*" class="operator-option"
+                            aria-pressed="false">
+                                ×
+                            </button>
+                            <!-- Division -->
+                            <button data-action="operation" data-value="/" class="operator-option"
+                            aria-pressed="false">
+                                 ÷
+                            </button>
+                    </div>
+
+                        <!-- Clear operator checkbox -->
+                        <label class="clear-operator-label">
+
+                            <input
+                                type="checkbox"
+                                class="clear-operator-checkbox"
+                                data-field="resetOperation" >
+                            Remove operator on clear
+                        </label>
+
+                    <!-- Calculate button -->
+                    <button
+                        class="calculate-button"
+                        type="button"
+                    >
+                        Calculate
+                    </button>
+
+
+                    <!-- Result -->
+                    <div
+                        class="result-container error"
+                        aria-live="polite"
+                    >
+
+                    
+                          <small class="result-label">
+                            Result
+                        </small>
+                       
+
+                        <output class="result">
+                            —
+                        </output>
+
+                    </div>
+
+
+                    <!-- Action buttons -->
+                    <div class="action-buttons">
+
+                        <button
+                            class="clear-button"
+                            type="button"
+                        >
+                            Clear
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </article>
+        </div>  
+
+        </div>
+
+    </main>
+
+
+    <script src="scripts/main.js"></script>
+
+</body>
+
+</html>
