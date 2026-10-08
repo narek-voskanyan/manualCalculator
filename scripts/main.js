@@ -10,12 +10,12 @@ window.CalculatorApp = function(options) {
         this.cards = document.querySelector(options.cards);
         this.panel = document.querySelector(options.panel);
 
-        this.firstField = document.querySelector('.first-number');
-        this.secondField = document.querySelector('.second-number');
-        this.container = document.querySelector('.operator-buttons');
-        this.calculator = document.querySelector('.calculator');
-        this.calculateButton = document.querySelector('.calculate-button');
-        this.resultField = document.querySelector('.result-container output');
+        this.firstField = document.querySelector(options.firstField);
+        this.secondField = document.querySelector(options.secondField);
+        this.container = document.querySelector(options.container);
+        this.calculator = document.querySelector(options.calculator);
+        this.calculateButton = document.querySelector(options.calculateButton);
+        this.resultField = document.querySelector(options.resultField);
         this.removeOperatorCheckbox = document.querySelector('.clear-operator-checkbox');
         this.clearButton = document.querySelector('.clear-button');
     };
@@ -118,8 +118,26 @@ window.CalculatorApp = function(options) {
             self.createCalculator();
         });*/
 
+        //Apply only to fill numbers fields to decimal numbers
+        this.firstField.addEventListener('input', (event) => {
+            if (event.target.getAttribute('inputmode') === 'decimal') {
+                event.target.value = event.target.value.replace(/[^0-9.]/g, '');
+
+            }
+            this.localStorigeSetup();
+        });
+
+        this.secondField.addEventListener('input', (event) => {
+            if (event.target.getAttribute('inputmode') === 'decimal') {
+                event.target.value = event.target.value.replace(/[^0-9.]/g, '');
+               
+            }
+            this.localStorigeSetup();
+        });
+
         this.container.addEventListener('click', event => {
             this.handleOperatorClick(event);
+            this.localStorigeSetup();
         });
 
         this.calculateButton.addEventListener('click', () => {
@@ -130,13 +148,16 @@ window.CalculatorApp = function(options) {
             if (this.firstField.value === '' || this.secondField.value === '') {
                 this.resultField.classList.add('error-message');
                 this.resultField.value = 'Error: fill numbers fields';
+                this.localStorigeSetup();
                 return;
+              
             }
 
             const operator = this.getSelectedOperator();
             const result = this.calculate(firstNumberValue, secondNumberValue, operator);
 
             this.displayResult(result);
+            this.localStorigeSetup();
         });
 
         this.clearButton.addEventListener('click', () => {
@@ -151,6 +172,11 @@ window.CalculatorApp = function(options) {
 
                 allButtons.forEach(button => button.classList.remove('active'));
             }
+            this.localStorigeSetup();
+        });
+
+        this.removeOperatorCheckbox.addEventListener('change', () => {
+            this.localStorigeSetup();
         });
 
         // TODO: card and panel controls call the same action methods by ID.
@@ -221,6 +247,49 @@ window.CalculatorApp = function(options) {
         // Preserve an intentionally empty list.
     };
 
+
+    this.localStorigeSetup = function() {
+        const calculatorData ={
+            firstNumber: this.firstField.value,
+            secondNumber: this.secondField.value,
+            operator: this.getSelectedOperator(),
+            result: this.resultField.value,
+            removeOperatorCheckbox: this.removeOperatorCheckbox.checked
+        };
+        localStorage.setItem('calculatorData', JSON.stringify(calculatorData));
+    }
+
+    this.localStorageGet = function() {
+        const savedData = localStorage.getItem('calculatorData');
+    
+        if (!savedData) return;
+    
+        const data = JSON.parse(savedData);
+    
+        this.firstField.value = data.firstNumber;
+        this.secondField.value = data.secondNumber;
+        this.resultField.value = data.result;
+
+        if (typeof data.result === 'string' && data.result.startsWith('Error:')) {
+            this.resultField.classList.add('error-message');
+        } else {
+            this.resultField.classList.remove('error-message');
+        }
+        this.removeOperatorCheckbox.checked = data.removeOperatorCheckbox;
+
+        const allButtons = this.container.querySelectorAll('.operator-option');
+
+        //return saved operator and set active class
+        allButtons.forEach(button => {
+            const isSelected = button.dataset.value === data.operator;
+
+            button.classList.toggle('active', isSelected);
+            button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+        });
+
+    };
+
+
     /* -------------------- Initialization -------------------- */
     this.init = function() {
         this.initVars();
@@ -228,13 +297,29 @@ window.CalculatorApp = function(options) {
         this.bindEvents();
         this.render();
         this.initDrag();
+        this.localStorageGet();
     };
 
+
+
+
+
+
+
     this.init();
+    
 };
 
 /* -------------------- Application startup -------------------- */
 window.calculatorApp = new window.CalculatorApp({
     cards: '#cards',
-    panel: '#panel-list'
+    panel: '#panel-list',
+    firstField: '.first-number',
+    secondField: '.second-number',
+    container: '.operator-buttons',
+    calculator: '.calculator',
+    calculateButton: '.calculate-button',
+    resultField: '.result-container output',
+    removeOperatorCheckbox: '.clear-operator-checkbox',
+    clearButton: '.clear-button'
 });
