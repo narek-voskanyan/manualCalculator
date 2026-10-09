@@ -59,14 +59,13 @@ window.CalculatorApp = function(options) {
 
     this.calculate = function(firstNumberValue, secondNumberValue, operator) {
         let result;
-        const chosenOperator = this.getSelectedOperator();
 
-        if (!chosenOperator) {
+        if (!operator) {
             result = 'Error: select an operator';
             return result;
         }
 
-        if (secondNumberValue === 0 && chosenOperator === '/') {
+        if (secondNumberValue === 0 && operator === '/') {
             result = 'Error: division by zero';
             return result;
         }
@@ -92,46 +91,44 @@ window.CalculatorApp = function(options) {
         return result;
     };
 
-    /* -------------------- Events -------------------- */
-    this.handleOperatorClick = function(event) {
-        const clickedButton = event.target.closest('.operator-option');
+        /* -------------------- Events -------------------- */
+        this.handleOperatorClick = function(event) {
+            const clickedButton = event.target.closest('.operator-option');
 
-        if (!clickedButton) return;
+            if (!clickedButton) return;
 
-        const allButtons = this.container.querySelectorAll('.operator-option');
+            const allButtons = this.container.querySelectorAll('.operator-option');
 
-        allButtons.forEach(button => {
-            const isClicked = (button === clickedButton);
+            allButtons.forEach(button => {
+                const isClicked = (button === clickedButton);
 
-            button.setAttribute('aria-pressed', isClicked ? 'true' : 'false');
+                button.setAttribute('aria-pressed', isClicked ? 'true' : 'false');
 
-            if (isClicked) {
-                button.classList.add('active');
-            } else {
-                button.classList.remove('active');
-            }
-        });
-    };
+                if (isClicked) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
+        };
 
-    this.bindEvents = function() {
+        this.bindEvents = function() {
       /*  document.querySelector('#add').addEventListener('click', function() {
             self.createCalculator();
         });*/
 
         //Apply only to fill numbers fields to decimal numbers
         this.firstField.addEventListener('input', (event) => {
-            if (event.target.getAttribute('inputmode') === 'decimal') {
-                event.target.value = event.target.value.replace(/[^0-9.]/g, '');
+            this.resultField.value = '';
+                event.target.value = event.target.value.replace(/[^0-9.-]/g, '');
 
-            }
             this.localStorigeSetup();
         });
 
         this.secondField.addEventListener('input', (event) => {
-            if (event.target.getAttribute('inputmode') === 'decimal') {
-                event.target.value = event.target.value.replace(/[^0-9.]/g, '');
-               
-            }
+            this.resultField.value = '';
+                event.target.value = event.target.value.replace(/[^0-9.-]/g, '');
+
             this.localStorigeSetup();
         });
 
@@ -144,6 +141,8 @@ window.CalculatorApp = function(options) {
             const firstNumberValue = Number(this.firstField.value);
             const secondNumberValue = Number(this.secondField.value);
 
+
+
             // Inspect numbers input fields
             if (this.firstField.value === '' || this.secondField.value === '') {
                 this.resultField.classList.add('error-message');
@@ -151,6 +150,12 @@ window.CalculatorApp = function(options) {
                 this.localStorigeSetup();
                 return;
               
+            }
+
+            if (!Number.isFinite(firstNumberValue) || !Number.isFinite(secondNumberValue)) {
+                this.resultField.classList.add('error-message');
+                this.resultField.value = 'Error: fill correct numbers';
+                return; 
             }
 
             const operator = this.getSelectedOperator();
@@ -181,71 +186,71 @@ window.CalculatorApp = function(options) {
 
         // TODO: card and panel controls call the same action methods by ID.
         // Input events update state and clear any outdated result.
-    };
+        };
 
-    this.initDrag = function() {
-        // TODO: connect your drag-and-drop component to both views.
-        // Choose how it reports the requested reorder to CalculatorApp.
-        // Keep drag mechanics separate from calculator data and storage.
-    };
+        this.initDrag = function() {
+            // TODO: connect your drag-and-drop component to both views.
+            // Choose how it reports the requested reorder to CalculatorApp.
+            // Keep drag mechanics separate from calculator data and storage.
+        };
 
-    /* -------------------- Rendering -------------------- */
-    this.renderCards = function() {
-        // TODO: display this.calculators as cards.
-        // You can adapt your existing Calculator class for this view.
-    };
+        /* -------------------- Rendering -------------------- */
+        this.renderCards = function() {
+            // TODO: display this.calculators as cards.
+            // You can adapt your existing Calculator class for this view.
+        };
 
-    this.renderPanel = function() {
-        // TODO: display the same array as control panel rows.
-    };
+        this.renderPanel = function() {
+            // TODO: display the same array as control panel rows.
+        };
 
-    this.render = function() {
-        this.renderCards();
-        this.renderPanel();
-    };
+        this.render = function() {
+            this.renderCards();
+            this.renderPanel();
+        };
 
-    this.updateCalculatorView = function(id) {
-        // TODO: update relevant elements without recreating the focused input.
-    };
+        this.updateCalculatorView = function(id) {
+            // TODO: update relevant elements without recreating the focused input.
+        };
 
-    this.displayResult = function(result) {
-        // Verify the numbers were filled
-        if (result === 'Error: fill numbers fields') {
-            this.resultField.classList.add('error-message');
+        this.displayResult = function(result) {
+            // Verify the numbers were filled
+            if (result === 'Error: fill numbers fields') {
+                this.resultField.classList.add('error-message');
+                this.resultField.value = result;
+                return;
+            }
+
+            // Verify the second number is not zero
+            if (result === 'Error: division by zero') {
+                this.resultField.classList.add('error-message');
+                this.resultField.value = result;
+                return;
+            }
+
+            // Verify the operator was chosen
+            if (result === 'Error: select an operator') {
+                this.resultField.classList.add('error-message');
+                this.resultField.value = result;
+                return;
+            }
+
+            // Display the result
+            this.resultField.classList.remove('error-message');
             this.resultField.value = result;
-            return;
-        }
+        };
 
-        // Verify the second number is not zero
-        if (result === 'Error: division by zero') {
-            this.resultField.classList.add('error-message');
-            this.resultField.value = result;
-            return;
-        }
+        /* -------------------- Persistence -------------------- */
+        this.saveCalculators = function() {
+            // TODO: serialize this.calculators and handle storage errors.
+            // Save data, not HTML or references to DOM elements.
+        };
 
-        // Verify the operator was chosen
-        if (result === 'Error: select an operator') {
-            this.resultField.classList.add('error-message');
-            this.resultField.value = result;
-            return;
-        }
-
-        // Display the result
-        this.resultField.classList.remove('error-message');
-        this.resultField.value = result;
-    };
-
-    /* -------------------- Persistence -------------------- */
-    this.saveCalculators = function() {
-        // TODO: serialize this.calculators and handle storage errors.
-        // Save data, not HTML or references to DOM elements.
-    };
-
-    this.loadCalculators = function() {
-        // TODO: read, parse and validate saved data.
-        // Restore nextId from the highest saved numeric ID.
-        // Preserve an intentionally empty list.
-    };
+        this.loadCalculators = function() {
+            // TODO: read, parse and validate saved data.
+            // Restore nextId from the highest saved numeric ID.
+            // Preserve an intentionally empty list.
+        };
 
 
     this.localStorigeSetup = function() {
