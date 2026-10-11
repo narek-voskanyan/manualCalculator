@@ -5,7 +5,6 @@ window.CalculatorApp = function(options) {
     /* -------------------- State -------------------- */
     this.initVars = function() {
         this.options = options;
-        this.calculators = [];
         this.nextId = 1;
         this.cards = document.querySelector(options.cards);
         this.panel = document.querySelector(options.panel);
@@ -16,8 +15,13 @@ window.CalculatorApp = function(options) {
         this.calculator = document.querySelector(options.calculator);
         this.calculateButton = document.querySelector(options.calculateButton);
         this.resultField = document.querySelector(options.resultField);
+
+        this.calculatorTemplate = document.querySelector('#calculator-template');
         this.removeOperatorCheckbox = document.querySelector('.clear-operator-checkbox');
         this.clearButton = document.querySelector('.clear-button');
+
+        this.calculators = [];
+        this.nextId = 1;
     };
 
     this.findCalculator = function(id) {
@@ -28,9 +32,25 @@ window.CalculatorApp = function(options) {
 
     /* -------------------- Actions -------------------- */
     this.createCalculator = function() {
-        // TODO: add a new state object, then render and save.
-        // Assign a unique ID using this.nextId.
+       var calculator = {
+        id: 'calc-' + this.nextId,
+        title: 'Calculator ' + this.nextId,
+        a: '',
+        b: '',
+        operation: '',
+        result: '',
+        error: '',
+        minimized: false,
+        resetOperation: false
     };
+
+    this.calculators.push(calculator);
+    this.nextId++;
+
+    this.saveCalculators();
+
+    return calculator;
+};
 
     this.toggleCalculator = function(id) {
         var state = this.findCalculator(id);
@@ -42,7 +62,14 @@ window.CalculatorApp = function(options) {
     };
 
     this.removeCalculator = function(id) {
-        // TODO: remove the object from the array, update both views and save.
+        this.calculators = this.calculators.filter(
+            item => item.id !== id
+        );
+        if (this.calculators.length === 0) {
+            this.nextId = 1;
+        }
+        this.saveCalculators();
+        this.render();
     };
 
     this.moveCalculator = function() {
@@ -113,21 +140,41 @@ window.CalculatorApp = function(options) {
         };
 
         this.bindEvents = function() {
-      /*  document.querySelector('#add').addEventListener('click', function() {
-            self.createCalculator();
-        });*/
+
+            this.cards.addEventListener('click', event => {
+            const minimizeButton = event.target.closest(
+                '.minimize-calculator-button'
+            );
+            if (!minimizeButton) return;
+            const article = minimizeButton.closest('.calculator');
+            if (!article) return;
+            const id = article.dataset.id;
+            this.toggleCalculator(id);
+
+});
 
         //Apply only to fill numbers fields to decimal numbers
         this.firstField.addEventListener('input', (event) => {
-            this.resultField.value = '';
-                event.target.value = event.target.value.replace(/[^0-9.-]/g, '');
+         this.resultField.value = '';
+            event.target.value = event.target.value.replace(/[^0-9.-]/g, '');
 
+            // Allow only one decimal point
+            event.target.value = event.target.value.replace(/(\..*)\./g, '$1');
+
+            // Allow minus only at the beginning
+            event.target.value = event.target.value.replace(/(?!^)-/g, '');
             this.localStorigeSetup();
         });
 
         this.secondField.addEventListener('input', (event) => {
             this.resultField.value = '';
                 event.target.value = event.target.value.replace(/[^0-9.-]/g, '');
+
+                // Allow only one decimal point
+                event.target.value = event.target.value.replace(/(\..*)\./g, '$1');
+
+                // Allow minus only at the beginning
+                event.target.value = event.target.value.replace(/(?!^)-/g, '');
 
             this.localStorigeSetup();
         });
@@ -196,8 +243,63 @@ window.CalculatorApp = function(options) {
 
         /* -------------------- Rendering -------------------- */
         this.renderCards = function() {
-            // TODO: display this.calculators as cards.
-            // You can adapt your existing Calculator class for this view.
+
+            this.cards.innerHTML = '';
+        
+            this.calculators.forEach(item => {
+        
+                const clone = this.calculatorTemplate.content.cloneNode(true);
+                const article = clone.querySelector('.calculator');
+                article.dataset.id = item.id;
+        
+                const title = article.querySelector('.calculator-window-title');
+                title.textContent = item.title;
+                const firstInput = article.querySelector('.first-number');
+                const secondInput = article.querySelector('.second-number');
+
+                firstInput.value = item.a;
+                secondInput.value = item.b;
+                
+                const operatorButtons = article.querySelectorAll('.operator-option');
+
+                operatorButtons.forEach(button => {
+                    const isSelected = button.dataset.value === item.operation;
+
+                    button.classList.toggle('active', isSelected);
+                    button.setAttribute('aria-pressed', String(isSelected));
+                });
+                const resultField = article.querySelector('.result');
+
+                resultField.textContent = item.result !== ''
+                    ? item.result
+                    : '—';
+
+                    const resetCheckbox = article.querySelector('.clear-operator-checkbox');
+
+                    resetCheckbox.checked = item.resetOperation;
+
+                    const fullContent = article.querySelector('.calculator-content');
+                    const minimizedContent = article.querySelector('.calculator-minimized-content');
+                    const minimizedResult = article.querySelector('.calculator-minimized-result');
+                    const minimizeButton = article.querySelector('.minimize-calculator-button');
+
+                    fullContent.hidden = item.minimized;
+                    minimizedContent.hidden = !item.minimized;
+
+                    minimizedResult.textContent = item.result !== ''
+                        ? item.result
+                        : '—';
+
+                    minimizeButton.textContent = item.minimized ? '+' : '−';
+                    minimizeButton.setAttribute(
+                        'aria-label',
+                        item.minimized ? 'Expand calculator' : 'Minimize calculator'
+);
+
+                this.cards.appendChild(clone);
+        
+            });
+        
         };
 
         this.renderPanel = function() {
@@ -242,14 +344,57 @@ window.CalculatorApp = function(options) {
 
         /* -------------------- Persistence -------------------- */
         this.saveCalculators = function() {
-            // TODO: serialize this.calculators and handle storage errors.
-            // Save data, not HTML or references to DOM elements.
+            localStorage.setItem(
+                'calculators',
+                JSON.stringify(this.calculators)
+            );
+            localStorage.setItem(
+                'nextId',
+                String(this.nextId)
+            );
         };
 
         this.loadCalculators = function() {
-            // TODO: read, parse and validate saved data.
-            // Restore nextId from the highest saved numeric ID.
-            // Preserve an intentionally empty list.
+            const savedData = localStorage.getItem('calculators');
+        
+            if (!savedData) {
+                this.calculators = [];
+                this.nextId = 1;
+                return;
+            }
+        
+            try {
+                const parsedData = JSON.parse(savedData);
+        
+                this.calculators = Array.isArray(parsedData)
+                    ? parsedData
+                    : [];
+            } catch (error) {
+                console.error('Cannot load calculators:', error);
+                this.calculators = [];
+            }
+        
+            // If there are no calculators, start from 1
+            if (this.calculators.length === 0) {
+                this.nextId = 1;
+                return;
+            }
+        
+            // Calculate nextId from existing calculator IDs
+            const ids = this.calculators.map(item => {
+                return Number(item.id.replace('calc-', ''));
+            });
+        
+            const calculatedNextId = Math.max(0, ...ids) + 1;
+        
+            // Read nextId from localStorage
+            const savedNextId = Number(localStorage.getItem('nextId'));
+        
+            // Use the larger value to avoid duplicate IDs
+            this.nextId = Math.max(
+                calculatedNextId,
+                savedNextId || 1
+            );
         };
 
 
@@ -302,7 +447,6 @@ window.CalculatorApp = function(options) {
         this.bindEvents();
         this.render();
         this.initDrag();
-        this.localStorageGet();
     };
 
 
@@ -317,8 +461,8 @@ window.CalculatorApp = function(options) {
 
 /* -------------------- Application startup -------------------- */
 window.calculatorApp = new window.CalculatorApp({
-    cards: '#cards',
-    panel: '#panel-list',
+    cards: '.calculator-list',
+    panel: '.calculator-control-list',
     firstField: '.first-number',
     secondField: '.second-number',
     container: '.operator-buttons',
