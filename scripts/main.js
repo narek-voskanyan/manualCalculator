@@ -241,6 +241,31 @@ window.CalculatorApp = function(options) {
             
                 return;
             }
+            //Clear button event
+                    
+        const clearButton = event.target.closest('.clear-button');
+
+        if (clearButton) {
+            const article = clearButton.closest('.calculator');
+            if (!article) return;
+
+            const calculator = this.findCalculator(article.dataset.id);
+            if (!calculator) return;
+
+            calculator.a = '';
+            calculator.b = '';
+            calculator.result = '';
+            calculator.error = '';
+
+            if (calculator.resetOperation) {
+                calculator.operation = '';
+            }
+
+            this.saveCalculators();
+            this.renderCards();
+
+            return;
+        }
 
         });
 
@@ -266,6 +291,22 @@ window.CalculatorApp = function(options) {
                 if (input.matches('.second-number')) {
                     calculator.b = cleanValue;
                 }
+            
+                this.saveCalculators();
+            });
+
+            this.cards.addEventListener('change', event => {
+                const checkbox = event.target.closest('.clear-operator-checkbox');
+            
+                if (!checkbox) return;
+            
+                const article = checkbox.closest('.calculator');
+                if (!article) return;
+            
+                const calculator = this.findCalculator(article.dataset.id);
+                if (!calculator) return;
+            
+                calculator.resetOperation = checkbox.checked;
             
                 this.saveCalculators();
             });
