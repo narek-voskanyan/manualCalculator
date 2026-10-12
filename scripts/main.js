@@ -84,6 +84,33 @@ window.CalculatorApp = function(options) {
         return activeButton ? activeButton.dataset.value : null;
     };
 
+    this.sanitizeNumber = function(value) {
+        value = value.replace(/[^0-9.-]/g, '');
+    
+        // Allow only one decimal point
+        value = value.replace(/(\..*)\./g, '$1');
+    
+        // Allow minus only at the beginning
+        value = value.replace(/(?!^)-/g, '');
+    
+        return value;
+    };
+
+    this.validateNumbers = function(a, b) {
+        if (a === '' || b === '') {
+            return 'Error: fill numbers fields';
+        }
+    
+        const firstNumber = Number(a);
+        const secondNumber = Number(b);
+    
+        if (!Number.isFinite(firstNumber) || !Number.isFinite(secondNumber)) {
+            return 'Error: fill correct numbers';
+        }
+    
+        return null;
+    };
+
     this.calculate = function(firstNumberValue, secondNumberValue, operator) {
         let result;
 
@@ -119,7 +146,7 @@ window.CalculatorApp = function(options) {
     };
 
         /* -------------------- Events -------------------- */
-        this.handleOperatorClick = function(event) {
+    this.handleOperatorClick = function(event) {
             const clickedButton = event.target.closest('.operator-option');
 
             if (!clickedButton) return;
@@ -137,22 +164,112 @@ window.CalculatorApp = function(options) {
                     button.classList.remove('active');
                 }
             });
-        };
+    };
 
-        this.bindEvents = function() {
+    this.bindEvents = function() {
+            
 
-            this.cards.addEventListener('click', event => {
+        this.cards.addEventListener('click', event => {
+
+            //Operator button event
+            const operatorButton = event.target.closest('.operator-option');
+            if (operatorButton) {
+                const operatorArticle = operatorButton.closest('.calculator');
+            
+                if (!operatorArticle) return;
+            
+                const calculator = this.findCalculator(operatorArticle.dataset.id);
+            
+                if (!calculator) return;
+            
+                calculator.operation = operatorButton.dataset.value;
+            
+                this.saveCalculators();
+                this.renderCards();
+            
+                return;
+            }
+
+            //Minimize button event
             const minimizeButton = event.target.closest(
                 '.minimize-calculator-button'
             );
-            if (!minimizeButton) return;
-            const article = minimizeButton.closest('.calculator');
-            if (!article) return;
-            const id = article.dataset.id;
-            this.toggleCalculator(id);
+            if (minimizeButton) {
+                const article = minimizeButton.closest('.calculator');
+                if (!article) return;
+                const id = article.dataset.id;
+                this.toggleCalculator(id);
+                return;
+            }
 
-});
+            //Calculate button event
+            const calculateButton = event.target.closest('.calculate-button');
+            if (calculateButton) {
+                const article = calculateButton.closest('.calculator');
+            
+                if (!article) return;
+            
+                const calculator = this.findCalculator(article.dataset.id);
+            
+                if (!calculator) return;
 
+                const validationError = this.validateNumbers(
+                    calculator.a,
+                    calculator.b
+                );
+                
+                if (validationError) {
+                    calculator.result = validationError;
+                
+                    this.saveCalculators();
+                    this.renderCards();
+                
+                    return;
+                }
+            
+                const firstNumber = Number(calculator.a);
+                const secondNumber = Number(calculator.b);
+                const result = this.calculate(
+                    firstNumber,
+                    secondNumber,
+                    calculator.operation
+                );
+                calculator.result = result;
+
+                this.saveCalculators();
+                this.renderCards();
+            
+                return;
+            }
+
+        });
+
+
+            this.cards.addEventListener('input', event => {
+                const input = event.target;
+            
+                if (!input.matches('.first-number, .second-number')) {
+                    return;
+                }
+                const article = input.closest('.calculator');
+                if (!article) return;
+
+                const cleanValue = this.sanitizeNumber(input.value);
+                input.value = cleanValue;
+
+                const calculator = this.findCalculator(article.dataset.id);
+            
+                if (!calculator) return;
+                if (input.matches('.first-number')) {
+                    calculator.a = cleanValue
+                }
+                if (input.matches('.second-number')) {
+                    calculator.b = cleanValue;
+                }
+            
+                this.saveCalculators();
+            });
+        /*
         //Apply only to fill numbers fields to decimal numbers
         this.firstField.addEventListener('input', (event) => {
          this.resultField.value = '';
@@ -229,7 +346,7 @@ window.CalculatorApp = function(options) {
 
         this.removeOperatorCheckbox.addEventListener('change', () => {
             this.localStorigeSetup();
-        });
+        });*/
 
         // TODO: card and panel controls call the same action methods by ID.
         // Input events update state and clear any outdated result.
