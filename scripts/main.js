@@ -11,6 +11,7 @@ window.CalculatorApp = function(options) {
 
 
         this.calculatorTemplate = document.querySelector('#calculator-template');
+        this.controlRowTemplate = document.querySelector('#control-row-template');
 
         this.calculators = [];
         this.nextId = 1;
@@ -49,8 +50,6 @@ window.CalculatorApp = function(options) {
         if (!state) return;
 
         state.minimized = !state.minimized;
-        this.render();
-        this.saveCalculators();
     };
 
     this.removeCalculator = function(id) {
@@ -157,6 +156,36 @@ window.CalculatorApp = function(options) {
                 this.render();
                 return;
             }
+
+            const removeButton = event.target.closest('.control-remove-button');
+
+            if (removeButton) {
+                const row = removeButton.closest('.calculator-control-row');
+                if (!row) return;
+            
+                const id = row.dataset.id;
+            
+                this.removeCalculator(id);
+                this.saveCalculators();
+                this.render();
+            
+                return;
+            }
+
+            const minimizeButton = event.target.closest('.control-minimize-button');
+
+            if (minimizeButton) {
+                const row = minimizeButton.closest('.calculator-control-row');
+                if (!row) return;
+            
+                const id = row.dataset.id;
+            
+                this.toggleCalculator(id);
+                this.saveCalculators();
+                this.render();
+            
+                return;
+            }
         });
             
         this.cards.addEventListener('click', event => {
@@ -189,6 +218,8 @@ window.CalculatorApp = function(options) {
                     if (!article) return;
                     const id = article.dataset.id;
                     this.toggleCalculator(id);
+                    this.saveCalculators();
+                    this.render();
                     return;
                 }
 
@@ -212,7 +243,7 @@ window.CalculatorApp = function(options) {
                         calculator.result = validationError;
                     
                         this.saveCalculators();
-                        this.renderCards();
+                        this.render();
                     
                         return;
                     }
@@ -227,7 +258,7 @@ window.CalculatorApp = function(options) {
                     calculator.result = result;
 
                     this.saveCalculators();
-                    this.renderCards();
+                    this.render();
                 
                     return;
                 }
@@ -251,7 +282,7 @@ window.CalculatorApp = function(options) {
                 }
 
                 this.saveCalculators();
-                this.renderCards();
+                this.render();
 
                 return;
             }
@@ -411,7 +442,33 @@ window.CalculatorApp = function(options) {
         };
 
         this.renderPanel = function() {
-            // TODO: display the same array as control panel rows.
+            this.panel.innerHTML = '';
+            this.calculators.forEach(item => {
+                const rowClone = this.controlRowTemplate.content.cloneNode(true);
+                const row = rowClone.querySelector('.calculator-control-row');
+                const title = row.querySelector('.control-calculator-title');
+                const value = row.querySelector('.control-calculator-result');
+                row.dataset.id = item.id;
+                title.textContent = item.title;
+
+                const minimizeButton = row.querySelector('.control-minimize-button');
+                minimizeButton.textContent = item.minimized ? 'Open' : 'Close';
+
+                const firstNumber = item.a;
+                const secondNumber = item.b;
+                const operator = item.operation === '*'
+                ? '×'
+                : item.operation === '/'
+                    ? '÷'
+                    : item.operation;
+                const result = item.result;
+                value.textContent = result !== ''
+                ? `${firstNumber} ${operator} ${secondNumber} = ${result}`
+                : '—';
+                            
+                this.panel.appendChild(rowClone);
+      
+            });
         };
 
         this.render = function() {
