@@ -7,6 +7,8 @@ window.CalculatorApp = function(options) {
         this.cards = document.querySelector(options.cards);
         this.panel = document.querySelector(options.panel);
 
+        this.panelContainer = this.panel.closest('.control-panel');
+
 
         this.calculatorTemplate = document.querySelector('#calculator-template');
 
@@ -127,7 +129,35 @@ window.CalculatorApp = function(options) {
         return result;
     };
 
+    this.collapseAllCalculators = function() {
+        this.calculators.forEach(item => {
+            item.minimized = true;
+        });
+            
+    };
+    this.expandAllCalculators = function() {
+        this.calculators.forEach(item => {
+            item.minimized = false;
+        });
+    };
+
     this.bindEvents = function() {
+        this.panelContainer.addEventListener('click', event => {
+            const ColapsButton = event.target.closest('.collapse-all-button');
+            if (ColapsButton) {
+                this.collapseAllCalculators();
+                this.saveCalculators();
+                this.render();
+                return;
+            }
+            const ExtendButton = event.target.closest('.expand-all-button');
+            if (ExtendButton) {
+                this.expandAllCalculators();
+                this.saveCalculators();
+                this.render();
+                return;
+            }
+        });
             
         this.cards.addEventListener('click', event => {
 
@@ -249,6 +279,8 @@ window.CalculatorApp = function(options) {
         }
 
 
+
+
         this.cards.addEventListener('input', event => {
                     const input = event.target;
                 
@@ -361,7 +393,7 @@ window.CalculatorApp = function(options) {
                         ? '÷'
                         : item.operation;
                 
-                        
+
                             minimizedResult.textContent = item.result !== ''
                                 ? `${item.a} ${displayOperator} ${item.b} = ${item.result}`
                                 : '—';
