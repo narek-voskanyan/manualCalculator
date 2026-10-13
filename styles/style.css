@@ -232,6 +232,13 @@ label {
     background: transparent;
     color: #8393a8;
 }
+.collapsed-summary {
+    padding: 12px 18px;
+    color: #78879d;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
 .minimize-calculator-button:hover{
     background: #edf3ff;
     border-color: #96b8fa;

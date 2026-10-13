@@ -58,8 +58,6 @@ window.CalculatorApp = function(options) {
         if (this.calculators.length === 0) {
             this.nextId = 1;
         }
-        this.saveCalculators();
-        this.render();
     };
 
     this.moveCalculator = function() {
@@ -128,160 +126,178 @@ window.CalculatorApp = function(options) {
 
         return result;
     };
+
     this.bindEvents = function() {
             
-
         this.cards.addEventListener('click', event => {
 
-            //Operator button event
-            const operatorButton = event.target.closest('.operator-option');
-            if (operatorButton) {
-                const operatorArticle = operatorButton.closest('.calculator');
-            
-                if (!operatorArticle) return;
-            
-                const calculator = this.findCalculator(operatorArticle.dataset.id);
-            
-                if (!calculator) return;
-            
-                calculator.operation = operatorButton.dataset.value;
-            
-                this.saveCalculators();
-                this.renderCards();
-            
-                return;
-            }
-
-            //Minimize button event
-            const minimizeButton = event.target.closest(
-                '.minimize-calculator-button'
-            );
-            if (minimizeButton) {
-                const article = minimizeButton.closest('.calculator');
-                if (!article) return;
-                const id = article.dataset.id;
-                this.toggleCalculator(id);
-                return;
-            }
-
-            //Calculate button event
-            const calculateButton = event.target.closest('.calculate-button');
-            if (calculateButton) {
-                const article = calculateButton.closest('.calculator');
-            
-                if (!article) return;
-            
-                const calculator = this.findCalculator(article.dataset.id);
-            
-                if (!calculator) return;
-
-                const validationError = this.validateNumbers(
-                    calculator.a,
-                    calculator.b
-                );
+                //Operator button event
+                const operatorButton = event.target.closest('.operator-option');
+                if (operatorButton) {
+                    const operatorArticle = operatorButton.closest('.calculator');
                 
-                if (validationError) {
-                    calculator.result = validationError;
+                    if (!operatorArticle) return;
+                
+                    const calculator = this.findCalculator(operatorArticle.dataset.id);
+                
+                    if (!calculator) return;
+                
+                    calculator.operation = operatorButton.dataset.value;
                 
                     this.saveCalculators();
                     this.renderCards();
                 
                     return;
                 }
-            
-                const firstNumber = Number(calculator.a);
-                const secondNumber = Number(calculator.b);
-                const result = this.calculate(
-                    firstNumber,
-                    secondNumber,
-                    calculator.operation
+
+                //Minimize button event
+                const minimizeButton = event.target.closest(
+                    '.minimize-calculator-button'
                 );
-                calculator.result = result;
-
-                this.saveCalculators();
-                this.renderCards();
-            
-                return;
-            }
-            //Clear button event
-                    
-        const clearButton = event.target.closest('.clear-button');
-
-        if (clearButton) {
-            const article = clearButton.closest('.calculator');
-            if (!article) return;
-
-            const calculator = this.findCalculator(article.dataset.id);
-            if (!calculator) return;
-
-            calculator.a = '';
-            calculator.b = '';
-            calculator.result = '';
-            calculator.error = '';
-
-            if (calculator.resetOperation) {
-                calculator.operation = '';
-            }
-
-            this.saveCalculators();
-            this.renderCards();
-
-            return;
-        }
-
-        });
-
-
-            this.cards.addEventListener('input', event => {
-                const input = event.target;
-            
-                if (!input.matches('.first-number, .second-number')) {
+                if (minimizeButton) {
+                    const article = minimizeButton.closest('.calculator');
+                    if (!article) return;
+                    const id = article.dataset.id;
+                    this.toggleCalculator(id);
                     return;
                 }
-                const article = input.closest('.calculator');
+
+                //Calculate button event
+                const calculateButton = event.target.closest('.calculate-button');
+                if (calculateButton) {
+                    const article = calculateButton.closest('.calculator');
+                
+                    if (!article) return;
+                
+                    const calculator = this.findCalculator(article.dataset.id);
+                
+                    if (!calculator) return;
+
+                    const validationError = this.validateNumbers(
+                        calculator.a,
+                        calculator.b
+                    );
+                    
+                    if (validationError) {
+                        calculator.result = validationError;
+                    
+                        this.saveCalculators();
+                        this.renderCards();
+                    
+                        return;
+                    }
+                
+                    const firstNumber = Number(calculator.a);
+                    const secondNumber = Number(calculator.b);
+                    const result = this.calculate(
+                        firstNumber,
+                        secondNumber,
+                        calculator.operation
+                    );
+                    calculator.result = result;
+
+                    this.saveCalculators();
+                    this.renderCards();
+                
+                    return;
+                }
+            //Clear button event        
+            const clearButton = event.target.closest('.clear-button');
+
+            if (clearButton) {
+                const article = clearButton.closest('.calculator');
                 if (!article) return;
 
-                const cleanValue = this.sanitizeNumber(input.value);
-                input.value = cleanValue;
-
                 const calculator = this.findCalculator(article.dataset.id);
-            
                 if (!calculator) return;
-                if (input.matches('.first-number')) {
-                    calculator.a = cleanValue
-                }
-                if (input.matches('.second-number')) {
-                    calculator.b = cleanValue;
-                }
+
+                calculator.a = '';
+                calculator.b = '';
                 calculator.result = '';
                 calculator.error = '';
 
-                const resultField = article.querySelector('.result');
-                resultField.textContent = '—';
-                resultField.classList.remove('error-message');
-            
-                this.saveCalculators();
-            });
+                if (calculator.resetOperation) {
+                    calculator.operation = '';
+                }
 
-            this.cards.addEventListener('change', event => {
-                const checkbox = event.target.closest('.clear-operator-checkbox');
-            
-                if (!checkbox) return;
-            
-                const article = checkbox.closest('.calculator');
+                this.saveCalculators();
+                this.renderCards();
+
+                return;
+            }
+
+            //remove calculator button event
+            const removeCalculatorButton = event.target.closest('.remove-calculator-button');
+            if (removeCalculatorButton) {
+                const article = removeCalculatorButton.closest('.calculator');
                 if (!article) return;
-            
-                const calculator = this.findCalculator(article.dataset.id);
-                if (!calculator) return;
-            
-                calculator.resetOperation = checkbox.checked;
-            
+                const id = article.dataset.id;
+                this.removeCalculator(id);
                 this.saveCalculators();
-            });
+                this.render();
+                return;
+            }
 
-        // TODO: card and panel controls call the same action methods by ID.
-        // Input events update state and clear any outdated result.
-        };
+        });
+
+        const addCalculatorButton = document.querySelector('.add-calculator-button');
+        if (addCalculatorButton) {
+            addCalculatorButton.addEventListener('click', () => {
+                this.createCalculator();
+                this.render();
+            });
+        }
+
+
+        this.cards.addEventListener('input', event => {
+                    const input = event.target;
+                
+                    if (!input.matches('.first-number, .second-number')) {
+                        return;
+                    }
+                    const article = input.closest('.calculator');
+                    if (!article) return;
+
+                    const cleanValue = this.sanitizeNumber(input.value);
+                    input.value = cleanValue;
+
+                    const calculator = this.findCalculator(article.dataset.id);
+                
+                    if (!calculator) return;
+                    if (input.matches('.first-number')) {
+                        calculator.a = cleanValue
+                    }
+                    if (input.matches('.second-number')) {
+                        calculator.b = cleanValue;
+                    }
+                    calculator.result = '';
+                    calculator.error = '';
+
+                    const resultField = article.querySelector('.result');
+                    resultField.textContent = '—';
+                    resultField.classList.remove('error-message');
+                
+                    this.saveCalculators();
+        });
+
+        this.cards.addEventListener('change', event => {
+                    const checkbox = event.target.closest('.clear-operator-checkbox');
+                
+                    if (!checkbox) return;
+                
+                    const article = checkbox.closest('.calculator');
+                    if (!article) return;
+                
+                    const calculator = this.findCalculator(article.dataset.id);
+                    if (!calculator) return;
+                
+                    calculator.resetOperation = checkbox.checked;
+                
+                    this.saveCalculators();
+        });
+
+
+    };
 
         this.initDrag = function() {
             // TODO: connect your drag-and-drop component to both views.
@@ -339,9 +355,16 @@ window.CalculatorApp = function(options) {
                     fullContent.hidden = item.minimized;
                     minimizedContent.hidden = !item.minimized;
 
-                    minimizedResult.textContent = item.result !== ''
-                        ? item.result
-                        : '—';
+                    const displayOperator = item.operation === '*'
+                    ? '×'
+                    : item.operation === '/'
+                        ? '÷'
+                        : item.operation;
+                
+                        
+                            minimizedResult.textContent = item.result !== ''
+                                ? `${item.a} ${displayOperator} ${item.b} = ${item.result}`
+                                : '—';
 
                     minimizeButton.textContent = item.minimized ? '+' : '−';
                     minimizeButton.setAttribute(
