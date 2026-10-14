@@ -15,7 +15,65 @@ window.CalculatorApp = function(options) {
 
         this.calculators = [];
         this.nextId = 1;
+
+        // Drag-and-drop state
+        this.draggedElement = null;
+        this.draggedId = null;
     };
+
+    this.initDragAndDrop = function(field, itemSelector) {
+        field.addEventListener('dragstart', event => {
+            if (!event.target.matches(
+                '.drag-calculator-button, .control-drag-handle'
+            )) return;
+        
+            const element = event.target.closest(itemSelector);
+            if (!element) return;
+            this.draggedElement = element;
+            this.draggedId = element.dataset.id;
+        
+        
+        });
+
+        field.addEventListener('dragover', event => {
+            event.preventDefault();
+            
+        });
+
+        field.addEventListener('drop', event => {
+            event.preventDefault();
+        
+            const targetElement = event.target.closest(itemSelector);
+            if (!targetElement || !this.draggedElement) return;
+            if (targetElement === this.draggedElement) return;
+        
+            const elements = Array.from(field.children);
+            const fromIndex = elements.indexOf(this.draggedElement);
+            const toIndex = elements.indexOf(targetElement);
+        
+            if (fromIndex === -1 || toIndex === -1) return;
+            if (fromIndex < toIndex) {
+                field.insertBefore(this.draggedElement, targetElement.nextElementSibling );
+            } else {
+                field.insertBefore(this.draggedElement,targetElement );
+            }
+
+            this.moveCalculator(field, itemSelector);
+        
+        });
+
+        field.addEventListener('dragend', event => {
+            console.log('Drag finished:', this.draggedId);
+        
+            this.draggedElement = null;
+            this.draggedId = null;
+            console.log('Drag finished:', this.draggedId);
+        });
+
+    }
+
+
+
 
     this.findCalculator = function(id) {
         return this.calculators.find(function(item) {
@@ -61,10 +119,20 @@ window.CalculatorApp = function(options) {
         }
     };
 
-    this.moveCalculator = function() {
-        // TODO: choose the arguments and update the array order.
-        // Update both views and save the new order.
-        // Convert data-attribute IDs to numbers if using numeric state IDs.
+    this.moveCalculator = function(field, itemSelector) {
+
+        const elements = Array.from(
+            field.querySelectorAll(itemSelector)
+        );
+    
+        const orderedIds = elements.map(element => element.dataset.id);
+    
+        this.calculators.sort((a, b) => {
+            return orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id);
+        });
+    
+        this.saveCalculators();
+        this.render();
     };
 
     this.sanitizeNumber = function(value) {
@@ -383,9 +451,8 @@ window.CalculatorApp = function(options) {
     };
 
         this.initDrag = function() {
-            // TODO: connect your drag-and-drop component to both views.
-            // Choose how it reports the requested reorder to CalculatorApp.
-            // Keep drag mechanics separate from calculator data and storage.
+            this.initDragAndDrop(this.cards, '.calculator');
+            this.initDragAndDrop(this.panel, '.calculator-control-row');
         };
 
         /* -------------------- Rendering -------------------- */
@@ -583,6 +650,7 @@ window.CalculatorApp = function(options) {
         this.bindEvents();
         this.render();
         this.initDrag();
+
     };
 
 
