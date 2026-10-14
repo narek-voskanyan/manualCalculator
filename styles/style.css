@@ -50,7 +50,6 @@ label {
     unicode-bidi: isolate;
 }
 
-
 /* Add calculator button styles*/
 .add-calculator-button{
     background: #2878ef;
@@ -112,6 +111,25 @@ label {
     font-size: 12px;
     color: #7c899c;
     line-height: 1.6;
+}
+
+.row-top input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    padding: 5px 2px;
+    font-weight: 600;
+    color: #334563;
+    background: transparent;
+}
+
+.row-top input:focus {
+    border-bottom-color: #2878ef;
+    outline: none;
+}
+.row-top input {
+    flex: 1;
 }
 
 /*control pannel footer styles*/
