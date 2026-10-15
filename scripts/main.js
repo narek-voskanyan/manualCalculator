@@ -47,27 +47,14 @@ window.CalculatorApp = function(options) {
             if (!targetElement || !this.draggedElement) return;
             if (targetElement === this.draggedElement) return;
         
-            const elements = Array.from(field.children);
-            const fromIndex = elements.indexOf(this.draggedElement);
-            const toIndex = elements.indexOf(targetElement);
-        
-            if (fromIndex === -1 || toIndex === -1) return;
-            if (fromIndex < toIndex) {
-                field.insertBefore(this.draggedElement, targetElement.nextElementSibling );
-            } else {
-                field.insertBefore(this.draggedElement,targetElement );
-            }
-
-            this.moveCalculator(field, itemSelector);
+            this.moveCalculator( this.draggedId, targetElement.dataset.id );
         
         });
 
         field.addEventListener('dragend', event => {
-            console.log('Drag finished:', this.draggedId);
-        
+
             this.draggedElement = null;
             this.draggedId = null;
-            console.log('Drag finished:', this.draggedId);
         });
 
     }
@@ -117,20 +104,47 @@ window.CalculatorApp = function(options) {
         }
     };
 
-    this.moveCalculator = function(field, itemSelector) {
+    this.moveCalculator = function(fromId, toId) {
 
-        const elements = Array.from(
-            field.querySelectorAll(itemSelector)
+        const fromIndex = this.calculators.findIndex(
+            calculator => calculator.id === fromId
         );
     
-        const orderedIds = elements.map(element => element.dataset.id);
-    
-        this.calculators.sort((a, b) => {
-            return orderedIds.indexOf(a.id) - orderedIds.indexOf(b.id);
-        });
-    
+        const toIndex = this.calculators.findIndex(
+            calculator => calculator.id === toId
+        );
+
+        if (fromIndex === -1 || toIndex === -1) return;
+        if (fromIndex === toIndex) return;
+
+        const [movedCalculator] = this.calculators.splice(fromIndex, 1);
+
+        this.calculators.splice(toIndex, 0, movedCalculator);
+
         this.saveCalculators();
         this.render();
+
+    };
+
+    this.formatCalculatorResult = function(item) {
+        const operator = item.operation === '*'
+            ? '×'
+            : item.operation === '/'
+                ? '÷'
+                : item.operation;
+    
+        const isError = typeof item.result === 'string'
+            && item.result.startsWith('Error:');
+    
+        if (isError) {
+            return item.result;
+        }
+    
+        if (item.result === '') {
+            return '—';
+        }
+    
+        return `${item.a} ${operator} ${item.b} = ${item.result}`;
     };
 
     this.sanitizeNumber = function(value) {
@@ -263,16 +277,21 @@ window.CalculatorApp = function(options) {
                     const operatorArticle = operatorButton.closest('.calculator');
                 
                     if (!operatorArticle) return;
+     
                 
                     const calculator = this.findCalculator(operatorArticle.dataset.id);
                 
                     if (!calculator) return;
                 
                     calculator.operation = operatorButton.dataset.value;
-                
+          
+
+                    // Clear previous calculation
+                    calculator.result = '';
+                    calculator.error = '';
+
                     this.saveCalculators();
-                    this.renderCards();
-                
+                    this.render();
                     return;
                 }
 
@@ -508,20 +527,7 @@ window.CalculatorApp = function(options) {
                     fullContent.hidden = item.minimized;
                     minimizedContent.hidden = !item.minimized;
 
-                    const displayOperator = item.operation === '*'
-                    ? '×'
-                    : item.operation === '/'
-                        ? '÷'
-                        : item.operation;
-                    
-                        const isError = typeof item.result === 'string' && item.result.startsWith('Error:');
-                        if(isError) {
-                            minimizedResult.textContent = item.result;
-                        }else{
-                            minimizedResult.textContent = item.result !== ''
-                            ? `${item.a} ${displayOperator} ${item.b} = ${item.result}`
-                            : '—';
-                        }
+                    this.formatCalculatorResult(item);
 
                     minimizeButton.textContent = item.minimized ? '+' : '−';
                     minimizeButton.setAttribute(
@@ -537,47 +543,32 @@ window.CalculatorApp = function(options) {
 
         this.renderPanel = function() {
             this.panel.innerHTML = '';
+        
             if (this.calculators.length === 0) {
                 const emptyMessage = document.createElement('p');
                 emptyMessage.classList.add('control-panel-empty');
                 emptyMessage.textContent = 'The list is empty.';
-            
+        
                 this.panel.appendChild(emptyMessage);
                 return;
             }
+        
             this.calculators.forEach(item => {
                 const rowClone = this.controlRowTemplate.content.cloneNode(true);
                 const row = rowClone.querySelector('.calculator-control-row');
                 const title = row.querySelector('.control-calculator-title');
                 const value = row.querySelector('.control-calculator-result');
+        
                 row.dataset.id = item.id;
                 title.value = item.title;
-
+        
                 const minimizeButton = row.querySelector('.control-minimize-button');
                 minimizeButton.textContent = item.minimized ? 'Open' : 'Close';
-
-                const firstNumber = item.a;
-                const secondNumber = item.b;
-                const operator = item.operation === '*'
-                ? '×'
-                : item.operation === '/'
-                    ? '÷'
-                    : item.operation;
-                const result = item.result;
-                 
-                const isError = typeof result === 'string' && result.startsWith('Error:');
-                
-                if(isError) {
-                    value.textContent = result;
-                    
-                }else{
-                    value.textContent = result !== ''
-                    ? `${firstNumber} ${operator} ${secondNumber} = ${result}`
-                    : '—';
-                    
-                }
+        
+               
+                value.textContent = this.formatCalculatorResult(item);
+        
                 this.panel.appendChild(rowClone);
-              
             });
         };
 
