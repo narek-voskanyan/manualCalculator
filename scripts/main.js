@@ -21,43 +21,137 @@ window.CalculatorApp = function(options) {
         this.draggedId = null;
     };
 
+    this.createDragPreview = function(event, element) {
+        const preview = element.cloneNode(true);
+        const rect = element.getBoundingClientRect();
+    
+        preview.classList.remove('dragging', 'drag-over');
+        preview.classList.add('drag-preview');
+    
+        preview.style.width = `${rect.width}px`;
+        preview.style.height = `${rect.height}px`;
+
+        preview.style.position = 'fixed';
+        preview.style.margin = '0';
+        preview.style.maxWidth = 'none';
+        preview.style.maxHeight = 'none';
+        preview.style.minWidth = '0';
+        preview.style.flex = 'none';
+        preview.style.display = 'block';
+    
+        this.dragPreview = preview;
+    
+        this.previewOffsetX = event.clientX - rect.left;
+        this.previewOffsetY = event.clientY - rect.top;
+    
+        document.body.appendChild(preview);
+    
+        this.moveDragPreview(event.clientX, event.clientY);
+    
+        // Hide the browser's default drag image.
+        const emptyImage = new Image();
+        emptyImage.src =
+            'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+    
+        event.dataTransfer.setDragImage(emptyImage, 0, 0);
+    };
+
+    this.removeDragPreview = function() {
+        if (!this.dragPreview) return;
+    
+        this.dragPreview.remove();
+        this.dragPreview = null;
+    };
+
+    this.moveDragPreview = function(x, y) {
+        if (!this.dragPreview) return;
+    
+        this.dragPreview.style.left =
+            `${x - this.previewOffsetX}px`;
+    
+        this.dragPreview.style.top =
+            `${y - this.previewOffsetY}px`;
+    };
+
+
     this.initDragAndDrop = function(field, itemSelector) {
-        field.addEventListener('dragstart', event => {
-            if (!event.target.matches(
-                '.drag-calculator-button, .control-drag-handle'
-            )) return;
-        
-            const element = event.target.closest(itemSelector);
-            if (!element) return;
-            this.draggedElement = element;
-            this.draggedId = element.dataset.id;
-        
-        
-        });
 
-        field.addEventListener('dragover', event => {
-            event.preventDefault();
-            
-        });
-
-        field.addEventListener('drop', event => {
-            event.preventDefault();
-        
-            const targetElement = event.target.closest(itemSelector);
-            if (!targetElement || !this.draggedElement) return;
-            if (targetElement === this.draggedElement) return;
-        
-            this.moveCalculator( this.draggedId, targetElement.dataset.id );
-        
-        });
-
-        field.addEventListener('dragend', event => {
-
+        const clearDragState = () => {
+            this.removeDragPreview();
+    
+            field.querySelectorAll('.dragging, .drag-over').forEach(element => {
+                element.classList.remove('dragging', 'drag-over');
+            });
+    
             this.draggedElement = null;
             this.draggedId = null;
+        };
+    
+        field.addEventListener('dragstart', event => {
+            if (!event.target.matches('.drag-calculator-button, .control-drag-handle')) return;
+    
+            const element = event.target.closest(itemSelector);
+            if (!element) return;
+    
+            this.draggedElement = element;
+            this.draggedId = element.dataset.id;
+    
+            this.createDragPreview(event, element);
+    
+            element.classList.add('dragging');
         });
-
-    }
+    
+        field.addEventListener('dragenter', event => {
+            const targetElement = event.target.closest(itemSelector);
+    
+            if (!targetElement || !this.draggedElement) return;
+            if (this.draggedElement.parentElement !== field) return;
+            if (targetElement === this.draggedElement) return;
+    
+            field.querySelectorAll('.drag-over').forEach(element => {
+                element.classList.remove('drag-over');
+            });
+    
+            targetElement.classList.add('drag-over');
+        });
+    
+        field.addEventListener('dragover', event => {
+            if (!this.draggedElement) return;
+            if (this.draggedElement.parentElement !== field) return;
+    
+            event.preventDefault();
+    
+            if (event.clientX || event.clientY) {
+                this.moveDragPreview(event.clientX, event.clientY);
+            }
+        });
+    
+        field.addEventListener('drop', event => {
+            event.preventDefault();
+    
+            const targetElement = event.target.closest(itemSelector);
+    
+            if (!targetElement ||
+                !this.draggedElement ||
+                this.draggedElement.parentElement !== field ||
+                targetElement === this.draggedElement) {
+                clearDragState();
+                return;
+            }
+    
+            const fromId = this.draggedId;
+            const toId = targetElement.dataset.id;
+    
+            clearDragState();
+    
+            this.moveCalculator(fromId, toId);
+        });
+    
+        field.addEventListener('dragend', () => {
+            clearDragState();
+        });
+    };
+    
 
 
     this.findCalculator = function(id) {
@@ -95,6 +189,22 @@ window.CalculatorApp = function(options) {
         state.minimized = !state.minimized;
     };
 
+    this.getCalculatorPositions = function() {
+        const positions = new Map();
+    
+        this.cards.querySelectorAll('.calculator').forEach(card => {
+            const rect = card.getBoundingClientRect();
+    
+            positions.set(card.dataset.id, {
+                x: rect.left,
+                y: rect.top
+            });
+        });
+    
+        return positions;
+    };
+
+
     this.removeCalculator = function(id) {
         this.calculators = this.calculators.filter(
             item => item.id !== id
@@ -117,12 +227,15 @@ window.CalculatorApp = function(options) {
         if (fromIndex === -1 || toIndex === -1) return;
         if (fromIndex === toIndex) return;
 
+        
+
         const [movedCalculator] = this.calculators.splice(fromIndex, 1);
 
         this.calculators.splice(toIndex, 0, movedCalculator);
 
         this.saveCalculators();
         this.render();
+      
 
     };
 

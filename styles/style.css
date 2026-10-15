@@ -237,6 +237,46 @@ label {
     font-size: 19px;
 }
 
+.calculator.dragging,
+.calculator-control-row.dragging{
+    opacity: 0.65;
+}
+.calculator.drag-over,
+.calculator-control-row.drag-over{
+    border: 2px dashed #3b82f6;
+    background-color: #eff6ff;
+}
+
+.drag-preview {
+    position: fixed;
+    z-index: 9999;
+    box-sizing: border-box;
+    pointer-events: none;
+
+    opacity: 0.98 !important;
+    background-color: #ffffff !important;
+
+    border: 2px solid #3b82f6 !important;
+    border-radius: 16px;
+
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+
+    transform: rotate(3deg);
+    transform-origin: center center;
+}
+
+.calculator {
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.calculator.is-moving {
+    transition: transform 250ms ease;
+}
+
 .row-actions {
     display: flex;
     align-items: center;
