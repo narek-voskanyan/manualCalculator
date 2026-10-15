@@ -73,8 +73,6 @@ window.CalculatorApp = function(options) {
     }
 
 
-
-
     this.findCalculator = function(id) {
         return this.calculators.find(function(item) {
             return item.id === id;
@@ -404,11 +402,16 @@ window.CalculatorApp = function(options) {
                     calculator.result = '';
                     calculator.error = '';
 
+                  
+
+
                     const resultField = article.querySelector('.result');
                     resultField.textContent = '—';
                     resultField.classList.remove('error-message');
                 
                     this.saveCalculators();
+                    this.renderPanel();
+                
         });
 
         this.cards.addEventListener('change', event => {
