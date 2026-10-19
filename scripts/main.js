@@ -3,7 +3,6 @@ window.CalculatorApp = function(options) {
 
     /* -------------------- State -------------------- */
     this.initVars = function() {
-        this.options = options;
         this.cards = document.querySelector(options.cards);
         this.panel = document.querySelector(options.panel);
 
@@ -19,19 +18,29 @@ window.CalculatorApp = function(options) {
         // Drag-and-drop state
         this.draggedElement = null;
         this.draggedId = null;
+
+        this.activePointerId = null;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+        this.isDragging = false;
+      
+        this.dropTargetId = null;
+        this.dropPosition = null;
     };
 
     this.createDragPreview = function(event, element) {
         const preview = element.cloneNode(true);
         const rect = element.getBoundingClientRect();
+
+        preview.classList.remove('dragging');
     
-        preview.classList.remove('dragging', 'drag-over');
         preview.classList.add('drag-preview');
     
         preview.style.width = `${rect.width}px`;
         preview.style.height = `${rect.height}px`;
 
         preview.style.position = 'fixed';
+        preview.style.pointerEvents = 'none';
         preview.style.margin = '0';
         preview.style.maxWidth = 'none';
         preview.style.maxHeight = 'none';
@@ -48,12 +57,7 @@ window.CalculatorApp = function(options) {
     
         this.moveDragPreview(event.clientX, event.clientY);
     
-        // Hide the browser's default drag image.
-        const emptyImage = new Image();
-        emptyImage.src =
-            'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
-    
-        event.dataTransfer.setDragImage(emptyImage, 0, 0);
+
     };
 
     this.removeDragPreview = function() {
@@ -73,83 +77,149 @@ window.CalculatorApp = function(options) {
             `${y - this.previewOffsetY}px`;
     };
 
-
-    this.initDragAndDrop = function(field, itemSelector) {
-
-        const clearDragState = () => {
+    this.initCustomDragAndDrop = function(field, itemSelector) {
+        const clearCustomDragState = () => {
             this.removeDragPreview();
-    
-            field.querySelectorAll('.dragging, .drag-over').forEach(element => {
-                element.classList.remove('dragging', 'drag-over');
-            });
-    
+        
+            if (this.draggedElement) {
+                this.draggedElement.classList.remove('dragging');
+            }
+        
             this.draggedElement = null;
             this.draggedId = null;
+            this.activePointerId = null;
+            this.isDragging = false;
+            this.dropTargetId = null;
+            this.dropPosition = null;
         };
-    
         field.addEventListener('dragstart', event => {
-            if (!event.target.matches('.drag-calculator-button, .control-drag-handle')) return;
+            event.preventDefault();
+        });
+
+        field.addEventListener('pointerdown', event => {
     
-            const element = event.target.closest(itemSelector);
-            if (!element) return;
+            if (this.draggedElement) return;
+    
+            if (event.pointerType === 'mouse' && event.button !== 0) return;
+    
+            const handle = event.target.closest(
+                '.drag-calculator-button, .control-drag-handle'
+            );
+    
+            if (!handle || !field.contains(handle)) return;
+    
+            const element = handle.closest(itemSelector);
+    
+            if (!element || element.parentElement !== field) return;
     
             this.draggedElement = element;
             this.draggedId = element.dataset.id;
+            field.setPointerCapture(event.pointerId);
+            this.activePointerId = event.pointerId;
+            this.dragStartX = event.clientX;
+            this.dragStartY = event.clientY;
     
-            this.createDragPreview(event, element);
+            console.log('CUSTOM DRAG START:', this.draggedId);
     
-            element.classList.add('dragging');
         });
-    
-        field.addEventListener('dragenter', event => {
-            const targetElement = event.target.closest(itemSelector);
-    
-            if (!targetElement || !this.draggedElement) return;
-            if (this.draggedElement.parentElement !== field) return;
-            if (targetElement === this.draggedElement) return;
-    
-            field.querySelectorAll('.drag-over').forEach(element => {
-                element.classList.remove('drag-over');
-            });
-    
-            targetElement.classList.add('drag-over');
-        });
-    
-        field.addEventListener('dragover', event => {
-            if (!this.draggedElement) return;
-            if (this.draggedElement.parentElement !== field) return;
-    
-            event.preventDefault();
-    
-            if (event.clientX || event.clientY) {
-                this.moveDragPreview(event.clientX, event.clientY);
+
+        field.addEventListener('pointermove', event => {
+
+            if (!this.draggedElement ||
+                event.pointerId !== this.activePointerId) return;
+        
+            if (event.pointerType === 'mouse' && !(event.buttons & 1)) return;
+        
+            const deltaX = event.clientX - this.dragStartX;
+            const deltaY = event.clientY - this.dragStartY;
+        
+            const distance = Math.hypot(deltaX, deltaY);
+        
+            if (!this.isDragging && distance < 5) return;
+        
+            if (!this.isDragging) {
+                this.isDragging = true;
+            
+                this.createDragPreview(event, this.draggedElement);
+                this.draggedElement.classList.add('dragging');
             }
-        });
-    
-        field.addEventListener('drop', event => {
-            event.preventDefault();
-    
-            const targetElement = event.target.closest(itemSelector);
-    
-            if (!targetElement ||
-                !this.draggedElement ||
-                this.draggedElement.parentElement !== field ||
-                targetElement === this.draggedElement) {
-                clearDragState();
-                return;
+            
+            this.moveDragPreview(event.clientX, event.clientY);
+             const target = document
+                .elementFromPoint(event.clientX, event.clientY)
+                ?.closest(itemSelector);
+
+            if (
+                target &&
+                target.parentElement === field &&
+                target.dataset.id !== this.draggedId
+            ) {
+                this.dropTargetId = target.dataset.id;
+
+                const rect = target.getBoundingClientRect();
+
+                const isCalculatorCard = itemSelector === '.calculator';
+                
+                if (isCalculatorCard) {
+                    const middleX = rect.left + rect.width / 2;
+                
+                    this.dropPosition =
+                        event.clientX < middleX ? 'before' : 'after';
+                } else {
+                    const middleY = rect.top + rect.height / 2;
+                
+                    this.dropPosition =
+                        event.clientY < middleY ? 'before' : 'after';
+                }
+
+
+
+            } else {
+                this.dropTargetId = null;
+                this.dropPosition = null;
             }
-    
+        
+        });
+
+        field.addEventListener('pointerup', event => {
+            if (!this.draggedElement ||
+                event.pointerId !== this.activePointerId) return;
+        
             const fromId = this.draggedId;
-            const toId = targetElement.dataset.id;
-    
-            clearDragState();
-    
-            this.moveCalculator(fromId, toId);
+            const toId = this.dropTargetId;
+            const position = this.dropPosition;
+        
+            const shouldMove =
+                this.isDragging &&
+                fromId &&
+                toId &&
+                position;
+        
+            clearCustomDragState();
+        
+            if (shouldMove) {
+                this.moveCalculator(fromId, toId, position);
+            }
+        });
+
+        field.addEventListener('pointercancel', event => {
+
+            if (!this.draggedElement ||
+                event.pointerId !== this.activePointerId) return;
+        
+                clearCustomDragState();
+        
+        });
+        
+        field.addEventListener('lostpointercapture', event => {
+
+            if (!this.draggedElement ||
+                event.pointerId !== this.activePointerId) return;
+        
+                clearCustomDragState();
+        
         });
     
-        field.addEventListener('dragend', () => {
-            clearDragState();
-        });
     };
     
 
@@ -189,22 +259,6 @@ window.CalculatorApp = function(options) {
         state.minimized = !state.minimized;
     };
 
-    this.getCalculatorPositions = function() {
-        const positions = new Map();
-    
-        this.cards.querySelectorAll('.calculator').forEach(card => {
-            const rect = card.getBoundingClientRect();
-    
-            positions.set(card.dataset.id, {
-                x: rect.left,
-                y: rect.top
-            });
-        });
-    
-        return positions;
-    };
-
-
     this.removeCalculator = function(id) {
         this.calculators = this.calculators.filter(
             item => item.id !== id
@@ -214,7 +268,7 @@ window.CalculatorApp = function(options) {
         }
     };
 
-    this.moveCalculator = function(fromId, toId) {
+    this.moveCalculator = function(fromId, toId, position = 'before') {
 
         const fromIndex = this.calculators.findIndex(
             calculator => calculator.id === fromId
@@ -231,7 +285,14 @@ window.CalculatorApp = function(options) {
 
         const [movedCalculator] = this.calculators.splice(fromIndex, 1);
 
-        this.calculators.splice(toIndex, 0, movedCalculator);
+        const newTargetIndex = this.calculators.findIndex(
+            calculator => calculator.id === toId
+        );
+        
+        const insertIndex =
+            position === 'after' ? newTargetIndex + 1 : newTargetIndex;
+        
+        this.calculators.splice(insertIndex, 0, movedCalculator);
 
         this.saveCalculators();
         this.render();
@@ -585,10 +646,10 @@ window.CalculatorApp = function(options) {
 
     };
 
-        this.initDrag = function() {
-            this.initDragAndDrop(this.cards, '.calculator');
-            this.initDragAndDrop(this.panel, '.calculator-control-row');
-        };
+    this.initDrag = function() {
+        this.initCustomDragAndDrop(this.cards, '.calculator');
+        this.initCustomDragAndDrop(this.panel, '.calculator-control-row');
+    };
 
         /* -------------------- Rendering -------------------- */
         this.renderCards = function() {
@@ -640,7 +701,7 @@ window.CalculatorApp = function(options) {
                     fullContent.hidden = item.minimized;
                     minimizedContent.hidden = !item.minimized;
 
-                    this.formatCalculatorResult(item);
+                    minimizedResult.textContent = this.formatCalculatorResult(item);
 
                     minimizeButton.textContent = item.minimized ? '+' : '−';
                     minimizeButton.setAttribute(
@@ -689,11 +750,6 @@ window.CalculatorApp = function(options) {
             this.renderCards();
             this.renderPanel();
         };
-
-        this.updateCalculatorView = function(id) {
-            // TODO: update relevant elements without recreating the focused input.
-        };
-
 
         /* -------------------- Persistence -------------------- */
         this.saveCalculators = function() {

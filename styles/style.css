@@ -235,16 +235,13 @@ label {
     color: #91a5c0;
     cursor: grab;
     font-size: 19px;
+    user-select: none;
+    touch-action: none;
 }
 
 .calculator.dragging,
 .calculator-control-row.dragging{
     opacity: 0.65;
-}
-.calculator.drag-over,
-.calculator-control-row.drag-over{
-    border: 2px dashed #3b82f6;
-    background-color: #eff6ff;
 }
 
 .drag-preview {
@@ -273,9 +270,6 @@ label {
         background-color 0.2s ease;
 }
 
-.calculator.is-moving {
-    transition: transform 250ms ease;
-}
 
 .row-actions {
     display: flex;
