@@ -325,7 +325,13 @@ window.CalculatorApp = function(options) {
         value = value.replace(/[^0-9.-]/g, '');
     
         // Allow only one decimal point
-        value = value.replace(/(\..*)\./g, '$1');
+        const firstDotIndex = value.indexOf('.');
+
+        if (firstDotIndex !== -1) {
+            value =
+                value.slice(0, firstDotIndex + 1) +
+                value.slice(firstDotIndex + 1).replace(/\./g, '');
+        }
     
         // Allow minus only at the beginning
         value = value.replace(/(?!^)-/g, '');
@@ -377,6 +383,9 @@ window.CalculatorApp = function(options) {
             default:
                 result = 'Error: select an operator';
                 break;
+        }
+        if (typeof result === 'number' && !Number.isFinite(result)) {
+            return 'Error: result is not finite';
         }
 
         return result;
@@ -753,18 +762,32 @@ window.CalculatorApp = function(options) {
 
         /* -------------------- Persistence -------------------- */
         this.saveCalculators = function() {
-            localStorage.setItem(
-                'calculators',
-                JSON.stringify(this.calculators)
-            );
-            localStorage.setItem(
-                'nextId',
-                String(this.nextId)
-            );
+            try {
+                localStorage.setItem(
+                    'calculators',
+                    JSON.stringify(this.calculators)
+                );
+        
+                localStorage.setItem(
+                    'nextId',
+                    String(this.nextId)
+                );
+            } catch (error) {
+                console.error('Cannot save calculators:', error);
+            }
         };
 
         this.loadCalculators = function() {
-            const savedData = localStorage.getItem('calculators');
+            let savedData;
+
+            try {
+                savedData = localStorage.getItem('calculators');
+            } catch (error) {
+                console.error('Cannot read calculators from localStorage:', error);
+                this.calculators = [];
+                this.nextId = 1;
+                return;
+            }
         
             if (!savedData) {
                 this.calculators = [];
@@ -772,16 +795,50 @@ window.CalculatorApp = function(options) {
                 return;
             }
         
+
             try {
                 const parsedData = JSON.parse(savedData);
-        
+            
+                const seenIds = new Set();
+            
                 this.calculators = Array.isArray(parsedData)
-                    ? parsedData
+                    ? parsedData.filter(item => {
+                        const isValid =
+                            item !== null &&
+                            typeof item === 'object' &&
+                            typeof item.id === 'string' &&
+                            /^calc-[1-9]\d*$/.test(item.id) &&
+                            Number.isSafeInteger(Number(item.id.slice(5))) &&
+                            Number(item.id.slice(5)) < Number.MAX_SAFE_INTEGER &&
+                            typeof item.title === 'string' &&
+                            typeof item.a === 'string' &&
+                            typeof item.b === 'string' &&
+                            typeof item.operation === 'string' &&
+                            ['', '+', '-', '*', '/'].includes(item.operation) &&
+                            typeof item.result === 'string' &&
+                            typeof item.error === 'string' &&
+                            typeof item.minimized === 'boolean' &&
+                            typeof item.resetOperation === 'boolean';
+            
+                        if (!isValid) {
+                            return false;
+                        }
+            
+                        if (seenIds.has(item.id)) {
+                            return false;
+                        }
+            
+                        seenIds.add(item.id);
+            
+                        return true;
+                    })
                     : [];
+            
             } catch (error) {
                 console.error('Cannot load calculators:', error);
                 this.calculators = [];
             }
+            
         
             // If there are no calculators, start from 1
             if (this.calculators.length === 0) {
@@ -797,12 +854,23 @@ window.CalculatorApp = function(options) {
             const calculatedNextId = Math.max(0, ...ids) + 1;
         
             // Read nextId from localStorage
-            const savedNextId = Number(localStorage.getItem('nextId'));
+            let savedNextId = 1;
+
+            try {
+                savedNextId = Number(localStorage.getItem('nextId'));
+            } catch (error) {
+                console.error('Cannot read nextId from localStorage:', error);
+            }
         
             // Use the larger value to avoid duplicate IDs
+            const validSavedNextId =
+            Number.isSafeInteger(savedNextId) && savedNextId > 0
+                ? savedNextId
+                : 1;
+
             this.nextId = Math.max(
                 calculatedNextId,
-                savedNextId || 1
+                validSavedNextId
             );
         };
 
