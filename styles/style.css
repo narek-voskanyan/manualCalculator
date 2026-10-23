@@ -270,6 +270,117 @@ label {
         background-color 0.2s ease;
 }
 
+.calculator.drop-before,
+.calculator.drop-after {
+    position: relative;
+    outline: 2px dashed #2563eb;
+    outline-offset: -2px;
+}
+
+.calculator.drop-before::before,
+.calculator.drop-after::before {
+    position: absolute;
+    top: -27px;
+    left: 0;
+    padding: 5px 9px;
+    background-color: #2563eb;
+    color: white;
+    border-radius: 5px;
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.calculator.drop-before::before {
+    content: "Place before";
+}
+
+.calculator.drop-after::before {
+    content: "Place after";
+}
+
+
+.drop-before {
+    border-left: 3px dashed #2563eb;
+}
+
+.drop-after {
+    border-right: 3px dashed #2563eb;
+}
+
+
+/* Control Panel drag-and-drop indicators */
+
+.control-item.drop-before,
+.control-item.drop-after {
+    position: relative;
+    outline: 2px dashed #2563eb;
+    outline-offset: -2px;
+}
+
+.control-item.drop-before::before,
+.control-item.drop-after::before {
+    position: absolute;
+    top: -24px;
+    left: 0;
+    padding: 5px 9px;
+    background-color: #2563eb;
+    color: white;
+    border-radius: 5px;
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.control-item.drop-before::before {
+    content: "Place before";
+}
+
+.control-item.drop-after::before {
+    content: "Place after";
+}
+
+/* Control Panel drag-and-drop indicators */
+
+.calculator-control-row.drop-before,
+.calculator-control-row.drop-after {
+    position: relative;
+    outline: 2px dashed #2563eb;
+    outline-offset: -2px;
+}
+
+.calculator-control-row.drop-before::before,
+.calculator-control-row.drop-after::before {
+    position: absolute;
+    left: 0;
+    padding: 5px 9px;
+    background-color: #2563eb;
+    color: white;
+    border-radius: 5px;
+    font-size: 11px;
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Insert before: label above the row */
+.calculator-control-row.drop-before::before {
+    content: "Place before";
+    top: -24px;
+}
+
+/* Insert after: label below the row */
+.calculator-control-row.drop-after::before {
+    content: "Place after";
+    top: -24px;
+}
+
+
 
 .row-actions {
     display: flex;

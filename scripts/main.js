@@ -78,12 +78,19 @@ window.CalculatorApp = function(options) {
     };
 
     this.initCustomDragAndDrop = function(field, itemSelector) {
+
         const clearCustomDragState = () => {
             this.removeDragPreview();
         
             if (this.draggedElement) {
                 this.draggedElement.classList.remove('dragging');
             }
+        
+            // Remove all drop indicators
+            field.querySelectorAll('.drop-before, .drop-after')
+                .forEach(item => {
+                    item.classList.remove('drop-before', 'drop-after');
+                });
         
             this.draggedElement = null;
             this.draggedId = null;
@@ -92,6 +99,7 @@ window.CalculatorApp = function(options) {
             this.dropTargetId = null;
             this.dropPosition = null;
         };
+        
         field.addEventListener('dragstart', event => {
             event.preventDefault();
         });
@@ -123,32 +131,117 @@ window.CalculatorApp = function(options) {
     
         });
 
+       
+    
         field.addEventListener('pointermove', event => {
 
             if (!this.draggedElement ||
                 event.pointerId !== this.activePointerId) return;
-        
+
             if (event.pointerType === 'mouse' && !(event.buttons & 1)) return;
-        
+
             const deltaX = event.clientX - this.dragStartX;
             const deltaY = event.clientY - this.dragStartY;
-        
+
             const distance = Math.hypot(deltaX, deltaY);
-        
+
             if (!this.isDragging && distance < 5) return;
-        
+
             if (!this.isDragging) {
                 this.isDragging = true;
-            
+
                 this.createDragPreview(event, this.draggedElement);
                 this.draggedElement.classList.add('dragging');
             }
-            
+
             this.moveDragPreview(event.clientX, event.clientY);
-             const target = document
+
+            // Reset the previous drop target
+            this.dropTargetId = null;
+            this.dropPosition = null;
+
+            // Remove previous dashed indicators
+            field.querySelectorAll('.drop-before, .drop-after')
+                .forEach(item => {
+                    item.classList.remove('drop-before', 'drop-after');
+                });
+
+            const target = document
                 .elementFromPoint(event.clientX, event.clientY)
                 ?.closest(itemSelector);
 
+            const items = field.querySelectorAll(itemSelector);
+            const firstItem = items[0];
+            const lastItem = items[items.length - 1];
+
+            const tolerance = 30;
+            const isCalculatorCard = itemSelector === '.calculator';
+
+            // Drop before the first calculator
+            if (!target && firstItem && isCalculatorCard) {
+                const rect = firstItem.getBoundingClientRect();
+
+                const isBeforeFirst =
+                    event.clientX >= rect.left - tolerance &&
+                    event.clientX < rect.left &&
+                    event.clientY >= rect.top - tolerance &&
+                    event.clientY <= rect.bottom;
+
+                if (isBeforeFirst && firstItem.dataset.id !== this.draggedId) {
+                    this.dropTargetId = firstItem.dataset.id;
+                    this.dropPosition = 'before';
+                }
+            }
+
+            // Drop after the last calculator
+            if (!target && lastItem && isCalculatorCard && !this.dropTargetId) {
+                const rect = lastItem.getBoundingClientRect();
+
+                const isAfterLast =
+                    event.clientX > rect.right &&
+                    event.clientX <= rect.right + tolerance &&
+                    event.clientY >= rect.top - tolerance &&
+                    event.clientY <= rect.bottom;
+
+                if (isAfterLast && lastItem.dataset.id !== this.draggedId) {
+                    this.dropTargetId = lastItem.dataset.id;
+                    this.dropPosition = 'after';
+                }
+            }
+                
+            // Drop above the first Control Panel row
+            if (!target && firstItem && !isCalculatorCard) {
+                const rect = firstItem.getBoundingClientRect();
+
+                const isAboveFirst =
+                    event.clientY >= rect.top - tolerance &&
+                    event.clientY < rect.top &&
+                    event.clientX >= rect.left &&
+                    event.clientX <= rect.right;
+
+                if (isAboveFirst && firstItem.dataset.id !== this.draggedId) {
+                    this.dropTargetId = firstItem.dataset.id;
+                    this.dropPosition = 'before';
+                }
+            }
+
+            // Drop below the last Control Panel row
+            if (!target && lastItem && !isCalculatorCard && !this.dropTargetId) {
+                const rect = lastItem.getBoundingClientRect();
+
+                const isBelowLast =
+                    event.clientY > rect.bottom &&
+                    event.clientY <= rect.bottom + tolerance &&
+                    event.clientX >= rect.left &&
+                    event.clientX <= rect.right;
+
+                if (isBelowLast && lastItem.dataset.id !== this.draggedId) {
+                    this.dropTargetId = lastItem.dataset.id;
+                    this.dropPosition = 'after';
+                }
+            }
+
+            // Detect drop target inside calculator cards or control rows
             if (
                 target &&
                 target.parentElement === field &&
@@ -158,28 +251,35 @@ window.CalculatorApp = function(options) {
 
                 const rect = target.getBoundingClientRect();
 
-                const isCalculatorCard = itemSelector === '.calculator';
-                
                 if (isCalculatorCard) {
                     const middleX = rect.left + rect.width / 2;
-                
+
                     this.dropPosition =
                         event.clientX < middleX ? 'before' : 'after';
                 } else {
                     const middleY = rect.top + rect.height / 2;
-                
+
                     this.dropPosition =
                         event.clientY < middleY ? 'before' : 'after';
                 }
-
-
-
-            } else {
-                this.dropTargetId = null;
-                this.dropPosition = null;
             }
-        
+
+            // Show dashed border on the selected drop target
+            if (this.dropTargetId && this.dropPosition) {
+                const dropTarget = Array.from(items)
+                    .find(item => item.dataset.id === this.dropTargetId);
+
+                if (dropTarget) {
+                    dropTarget.classList.add(
+                        this.dropPosition === 'before'
+                            ? 'drop-before'
+                            : 'drop-after'
+                    );
+                }
+            }
         });
+
+
 
         field.addEventListener('pointerup', event => {
             if (!this.draggedElement ||
