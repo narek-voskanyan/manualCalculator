@@ -27,6 +27,22 @@ label {
     font-size: 11px;
     color: #718096;
 }
+
+/* Calculator focus animation */
+.calculator {
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.calculator:focus {
+    outline: none;
+    border-color: #2878f0;
+    box-shadow: 0 0 0 3px rgba(40, 120, 240, 0.15);
+    background-color: rgba(40, 120, 240, 0.025);
+}
+
 .header{
     display: flex;
     justify-content: space-between;

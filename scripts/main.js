@@ -79,26 +79,43 @@ window.CalculatorApp = function(options) {
 
     this.initCustomDragAndDrop = function(field, itemSelector) {
 
+ 
         const clearCustomDragState = () => {
             this.removeDragPreview();
-        
+
             if (this.draggedElement) {
                 this.draggedElement.classList.remove('dragging');
             }
-        
-            // Remove all drop indicators
+
             field.querySelectorAll('.drop-before, .drop-after')
                 .forEach(item => {
                     item.classList.remove('drop-before', 'drop-after');
                 });
-        
+
+            const pointerId = this.activePointerId;
+
             this.draggedElement = null;
             this.draggedId = null;
             this.activePointerId = null;
             this.isDragging = false;
             this.dropTargetId = null;
             this.dropPosition = null;
+
+            if (
+                pointerId !== null &&
+                field.hasPointerCapture(pointerId)
+            ) {
+                field.releasePointerCapture(pointerId);
+            }
         };
+
+        // Store this field's cleanup function
+        if (!this.dragCleanupFunctions) {
+            this.dragCleanupFunctions = new Map();
+        }
+
+        this.dragCleanupFunctions.set(field, clearCustomDragState);
+
         
         field.addEventListener('dragstart', event => {
             event.preventDefault();
@@ -176,6 +193,68 @@ window.CalculatorApp = function(options) {
 
             const tolerance = 30;
             const isCalculatorCard = itemSelector === '.calculator';
+            
+            // Detect gaps between calculator cards
+            if (!target && isCalculatorCard) {
+                for (let i = 0; i < items.length - 1; i++) {
+                    const currentItem = items[i];
+                    const nextItem = items[i + 1];
+
+                    const currentRect = currentItem.getBoundingClientRect();
+                    const nextRect = nextItem.getBoundingClientRect();
+
+                    const isInGap =
+                        event.clientX >= currentRect.right &&
+                        event.clientX <= nextRect.left &&
+                        event.clientY >= Math.max(currentRect.top, nextRect.top) &&
+                        event.clientY <= Math.min(currentRect.bottom, nextRect.bottom);
+
+                    if (isInGap) {
+                        if (nextItem.dataset.id !== this.draggedId) {
+                            this.dropTargetId = nextItem.dataset.id;
+                            this.dropPosition = 'before';
+                        } else if (currentItem.dataset.id !== this.draggedId) {
+                            this.dropTargetId = currentItem.dataset.id;
+                            this.dropPosition = 'after';
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            // control panel gap detection
+            
+            // Detect gaps between Control Panel rows
+            if (!target && !isCalculatorCard) {
+                for (let i = 0; i < items.length - 1; i++) {
+                    const currentItem = items[i];
+                    const nextItem = items[i + 1];
+
+                    const currentRect = currentItem.getBoundingClientRect();
+                    const nextRect = nextItem.getBoundingClientRect();
+
+                    const isInGap =
+                        event.clientY >= currentRect.bottom &&
+                        event.clientY <= nextRect.top &&
+                        event.clientX >= Math.max(currentRect.left, nextRect.left) &&
+                        event.clientX <= Math.min(currentRect.right, nextRect.right);
+
+                    if (isInGap) {
+                        if (nextItem.dataset.id !== this.draggedId) {
+                            this.dropTargetId = nextItem.dataset.id;
+                            this.dropPosition = 'before';
+                        } else if (currentItem.dataset.id !== this.draggedId) {
+                            this.dropTargetId = currentItem.dataset.id;
+                            this.dropPosition = 'after';
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+
 
             // Drop before the first calculator
             if (!target && firstItem && isCalculatorCard) {
@@ -321,6 +400,9 @@ window.CalculatorApp = function(options) {
         });
     
     };
+
+   
+
     
 
 
@@ -569,13 +651,26 @@ window.CalculatorApp = function(options) {
                     calculator.operation = operatorButton.dataset.value;
           
 
+
+                    calculator.operation = operatorButton.dataset.value;
+
                     // Clear previous calculation
                     calculator.result = '';
                     calculator.error = '';
-
+                    
                     this.saveCalculators();
                     this.render();
+                    
+                    const updatedCard = Array.from(
+                        this.cards.querySelectorAll('.calculator')
+                    ).find(card => card.dataset.id === calculator.id);
+                    
+                    if (updatedCard) {
+                        updatedCard.focus();
+                    }
+                    
                     return;
+                    
                 }
 
                 //Minimize button event
@@ -613,6 +708,13 @@ window.CalculatorApp = function(options) {
                     
                         this.saveCalculators();
                         this.render();
+                        const updatedCard = Array.from(
+                            this.cards.querySelectorAll('.calculator')
+                        ).find(card => card.dataset.id === calculator.id);
+                        
+                        if (updatedCard) {
+                            updatedCard.focus();
+                        }
                     
                         return;
                     }
@@ -624,12 +726,22 @@ window.CalculatorApp = function(options) {
                         secondNumber,
                         calculator.operation
                     );
+                   
                     calculator.result = result;
 
                     this.saveCalculators();
                     this.render();
-                
+
+                    const updatedCard = Array.from(
+                        this.cards.querySelectorAll('.calculator')
+                    ).find(card => card.dataset.id === calculator.id);
+
+                    if (updatedCard) {
+                        updatedCard.focus();
+                    }
+
                     return;
+
                 }
             //Clear button event        
             const clearButton = event.target.closest('.clear-button');
@@ -751,14 +863,48 @@ window.CalculatorApp = function(options) {
             this.renderCards();
         });
 
+        //keyboard event listeners
+        
+            this.cards.addEventListener('keydown', event => {
+                const card = event.target.closest('.calculator');
+
+                if (!card) return;
+
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                
+                    const calculateButton = card.querySelector('.calculate-button');
+                
+                    if (calculateButton) {
+                        calculateButton.click();
+                    }
+                }
+            });
 
 
     };
 
-    this.initDrag = function() {
-        this.initCustomDragAndDrop(this.cards, '.calculator');
-        this.initCustomDragAndDrop(this.panel, '.calculator-control-row');
-    };
+
+                
+        this.initDrag = function() {
+            this.initCustomDragAndDrop(this.cards, '.calculator');
+            this.initCustomDragAndDrop(this.panel, '.calculator-control-row');
+
+            document.addEventListener('keydown', event => {
+                if (event.key !== 'Escape') return;
+                if (!this.draggedElement) return;
+
+                const activeField = this.draggedElement.parentElement;
+                const cleanup = this.dragCleanupFunctions.get(activeField);
+
+                if (cleanup) {
+                    event.preventDefault();
+                    cleanup();
+                }
+            });
+        };
+
+    
 
         /* -------------------- Rendering -------------------- */
         this.renderCards = function() {
@@ -770,6 +916,7 @@ window.CalculatorApp = function(options) {
                 const clone = this.calculatorTemplate.content.cloneNode(true);
                 const article = clone.querySelector('.calculator');
                 article.dataset.id = item.id;
+                article.tabIndex = -1;
         
                 const title = article.querySelector('.calculator-window-title');
                 title.textContent = item.title;
@@ -877,6 +1024,7 @@ window.CalculatorApp = function(options) {
             }
         };
 
+      
         this.loadCalculators = function() {
             let savedData;
 
@@ -888,19 +1036,18 @@ window.CalculatorApp = function(options) {
                 this.nextId = 1;
                 return;
             }
-        
+
             if (!savedData) {
                 this.calculators = [];
                 this.nextId = 1;
                 return;
             }
-        
 
             try {
                 const parsedData = JSON.parse(savedData);
-            
+
                 const seenIds = new Set();
-            
+
                 this.calculators = Array.isArray(parsedData)
                     ? parsedData.filter(item => {
                         const isValid =
@@ -915,44 +1062,57 @@ window.CalculatorApp = function(options) {
                             typeof item.b === 'string' &&
                             typeof item.operation === 'string' &&
                             ['', '+', '-', '*', '/'].includes(item.operation) &&
-                            typeof item.result === 'string' &&
+
+                            // Accept strings and finite numbers
+                            (
+                                typeof item.result === 'string' ||
+                                (
+                                    typeof item.result === 'number' &&
+                                    Number.isFinite(item.result)
+                                )
+                            ) &&
+
                             typeof item.error === 'string' &&
                             typeof item.minimized === 'boolean' &&
                             typeof item.resetOperation === 'boolean';
-            
+
                         if (!isValid) {
                             return false;
                         }
-            
+
                         if (seenIds.has(item.id)) {
                             return false;
                         }
-            
+
                         seenIds.add(item.id);
-            
+
+                        // Normalize numeric results to strings
+                        if (typeof item.result === 'number') {
+                            item.result = String(item.result);
+                        }
+
                         return true;
                     })
                     : [];
-            
+
             } catch (error) {
                 console.error('Cannot load calculators:', error);
                 this.calculators = [];
             }
-            
-        
+
             // If there are no calculators, start from 1
             if (this.calculators.length === 0) {
                 this.nextId = 1;
                 return;
             }
-        
+
             // Calculate nextId from existing calculator IDs
             const ids = this.calculators.map(item => {
                 return Number(item.id.replace('calc-', ''));
             });
-        
+
             const calculatedNextId = Math.max(0, ...ids) + 1;
-        
+
             // Read nextId from localStorage
             let savedNextId = 1;
 
@@ -961,18 +1121,19 @@ window.CalculatorApp = function(options) {
             } catch (error) {
                 console.error('Cannot read nextId from localStorage:', error);
             }
-        
+
             // Use the larger value to avoid duplicate IDs
             const validSavedNextId =
-            Number.isSafeInteger(savedNextId) && savedNextId > 0
-                ? savedNextId
-                : 1;
+                Number.isSafeInteger(savedNextId) && savedNextId > 0
+                    ? savedNextId
+                    : 1;
 
             this.nextId = Math.max(
                 calculatedNextId,
                 validSavedNextId
             );
         };
+
 
     /* -------------------- Initialization -------------------- */
     this.init = function() {
