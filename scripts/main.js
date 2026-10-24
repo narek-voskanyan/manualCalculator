@@ -864,22 +864,46 @@ window.CalculatorApp = function(options) {
         });
 
         //keyboard event listeners
-        
-            this.cards.addEventListener('keydown', event => {
-                const card = event.target.closest('.calculator');
+       
+        this.cards.addEventListener('keydown', event => {
+            const card = event.target.closest('.calculator');
 
-                if (!card) return;
+            if (!card) return;
 
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                
-                    const calculateButton = card.querySelector('.calculate-button');
-                
-                    if (calculateButton) {
-                        calculateButton.click();
-                    }
+            // Enter: Calculate
+            if (event.key === 'Enter') {
+                event.preventDefault();
+
+                const calculateButton = card.querySelector('.calculate-button');
+
+                if (calculateButton) {
+                    calculateButton.click();
                 }
-            });
+            }
+
+            // Operator keyboard shortcuts
+            
+            const operators = ['+', '-', '*', '/'];
+
+            if (operators.includes(event.key)) {
+
+                // Allow normal typing inside input fields
+                if (event.target.matches('input, textarea')) return;
+
+                event.preventDefault();
+
+                const operatorButton = Array.from(
+                    card.querySelectorAll('.operator-option')
+                ).find(button => button.dataset.value === event.key);
+
+                if (operatorButton) {
+                    operatorButton.click();
+                }
+            }
+
+        });
+
+
 
 
     };
